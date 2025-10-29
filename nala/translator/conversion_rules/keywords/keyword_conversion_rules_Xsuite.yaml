@@ -1,0 +1,16 @@
+general:
+  entrance_edge_angle: edge_entry_angle
+  exit_edge_angle: edge_exit_angle
+  edge_field_integral: fint
+  half_gap: hgap
+  n_kicks: num_multipole_kicks
+  isr_enable: radiation_flag
+rfcavity:
+  phase: lag
+  n_kicks: num_kicks
+  field_amplitude: voltage
+solenoid:
+  field_amplitude: ks_profile
+nonlinearlens:
+  integrated_strength: knll
+  dimensional_parameter: cnll

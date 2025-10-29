@@ -1,0 +1,38 @@
+chicane:
+  l: double
+  lb: double
+  ld: double
+  delay: double
+
+corrector:
+  l: double
+  cx: double
+  cy: double
+
+drift:
+  l: double
+
+phaseshifter:
+  l: double
+  phi: double
+
+quadrupole:
+  l: double
+  k1: double
+  dx: double
+  dy: double
+
+undulator:
+  aw: double
+  lambdau: double
+  nwig: long
+  helical: long
+  kx: double
+  ky: double
+  ax: double
+  ay: double
+  gradx: double
+  grady: double
+
+marker:
+  {}

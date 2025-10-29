@@ -1,0 +1,101 @@
+elegant:
+  Dipole: csrcsbend
+  Quadrupole: kquad
+  Sextupole: ksext
+  Octupole: koct
+  Beam_Position_Monitor: watch
+  Beam_Arrival_Monitor: moni
+  Bunch_Length_Monitor: moni
+  Screen: watch
+  Rcollimator: rcol
+  Collimator: ecol
+  Solenoid: sole
+  Wall_Current_Monitor: moni
+  Integrated_Current_Transformer: moni
+  Faraday_Cup_Monitor: moni
+  Diagnostic: moni
+  RFCavity: rfcw
+  RFDeflectingCavity: rfdf
+  Longitudinal_Wakefield: wake
+  FEL_Modulator: lsrmdltr
+  Scatter: scatter
+  Aperture: maxamp
+  Shutter: drift
+  Valve: drift
+  Bellows: drift
+  Cleaner: clean
+  APContour: apcontour
+  Watch_Point: watch
+  Marker: watch
+  Wakefield: wake
+  Combined_Corrector: kicker
+  Wiggler: wiggler
+  Laser: drift
+  TwissMatch: twiss
+  Plasma: Drift
+genesis:
+  Dipole: drift
+  Sextupole: drift
+  Octupole: drift
+  Beam_Position_Monitor: drift
+  Beam_Arrival_Monitor: drift
+  Bunch_Length_Monitor: drift
+  Screen: marker
+  RCollimator: drift
+  Collimator: drift
+  Monitor: marker
+  Solenoid: drift
+  Wall_Current_Monitor: drift
+  Integrated_Current_Transformer: drift
+  Faraday_Cup_Monitor: drift
+  RFCavity: drift
+  RFDeflectingCavity: drift
+  Wakefield: drift
+  Wiggler: undulator
+  Scatter: drift
+  Aperture: drift
+  Shutter: drift
+  Valve: drift
+  Bellows: drift
+  Cleaner: drift
+  Marker: marker
+  APContour: drift
+  Watch_Point: drift
+  Wakefield: drift
+  Drift: drift
+  Horizontal_Corrector: corrector
+  Vertical_Corrector: corrector
+  Combined_Corrector: corrector
+  Plasma: drift
+  TwissMatch: drift
+  Laser: drift
+
+name:
+  dia-bpm: beam_position_monitor
+  dia-bam: beam_arrival_monitor
+  dia-scr: screen
+  dia-wcm: wall_current_monitor
+  dia-ict: integrated_current_transformer
+aliases:
+  elegant:
+    RFCavity:
+      - rfca
+    Drift:
+      - drif
+    Combined_Corrector:
+      - vkick
+      - hkick
+      - kicker
+    Quadrupole:
+      - quad
+    Screen:
+      - mark
+      - marker
+    RFDeflectingCavity:
+      - rftm110
+    Dipole:
+      - sben
+      - rben
+      - sbend
+      - rbend
+      - csbend

@@ -1,0 +1,331 @@
+machineNames:
+  - CLA
+  - EBT
+  - INF
+areaNames:
+  - S01
+  - S02
+  - S03
+  - S04
+  - S05
+  - S06
+  - S07
+  - L01
+  - L02
+  - L03
+  - L04
+  - L4H
+  - SP1
+  - SP2
+  - SP3
+  - FEA
+  - FEH
+  - FED
+  - C2V
+  - VELA
+  - C10
+  - LAS
+  - INJ
+  - BA1
+  - GUN
+  - VCA
+  - LRG1
+  - HRG1
+  - VBC
+  - FMS
+  - MU1
+  - MU2
+  - FMB1
+  - FMB2
+  - FEC1
+  - FEC2
+classTypes:
+  MAG:
+    - QUAD
+    - DIP
+    - HVCOR
+    - SEXT
+    - HCOR
+    - VCOR
+    - SOL
+    - PMD
+  CAV:
+    - SOL
+  DIA:
+    - SCR
+    - BPM
+    - CBPM
+    - ICT
+    - BAM
+    - CAM
+    - LED
+    - WCM
+    - FCUP
+    - EM
+    - YAG
+    - ECOL
+    - RCOL
+    - EOM
+    - TDC
+    - CDR
+  PS:
+    - SHTR
+  VAC:
+    - APER
+    - IMG
+    - VALV
+  IOC:
+    - CS
+  OPT:
+    - HWP
+    - PICO
+    - 4C-PM
+    - MIRROR
+  SRV:
+    - LIGHT
+  LRF:
+    - CTRL
+  HRF:
+    - MOD
+  RFHOLD:
+    - ANY
+  LSR:
+    - SHUT
+  RF:
+    - PROTE
+    - SCR
+    - PROTCH
+    - PROTCL
+    - PROTG
+    - PROTT
+    - PROTVH
+    - PROTVL
+    - PROTL01
+  GUN:
+    - CAV
+    - SOL
+  SIM:
+    - MARK
+    - START
+    - END
+    - APER
+    - FOCUS
+    - MIDDLE
+    - WAKE
+  DCP:
+    - SCR
+    - EM
+  LIN:
+    - CAV
+classPVRecords:
+  magnets:
+    - TEST1
+    - TEST2
+  DIP: magnets
+  HVCOR: magnets
+  HCOR: magnets
+  VCOR: magnets
+  QUAD: magnets
+  SOL: magnets
+  SEXT: magnets
+  BPM:
+    - TEST1
+    - TEST2
+  BAM:
+    - TEST1
+    - TEST2
+  BLM:
+    - TEST1
+    - TEST2
+  CDR: BLM
+  EOM:
+    - TEST1
+    - TEST2
+  CBPM: BPM
+  PMD: magnets
+  CAM:
+    - TEST1
+    - TEST2
+  CS:
+    - TEST1
+    - TEST2
+  LED:
+    - TEST1
+    - TEST2
+  SCR:
+    - TEST1
+    - TEST2
+  YAG: SCR
+  WCM:
+    - TEST1
+    - TEST2
+  ICT:
+    - TEST1
+    - TEST2
+  FCUP:
+    - TEST1
+    - TEST2
+  IMG:
+    - TEST1
+    - TEST2
+  EM:
+    - TEST1
+    - TEST2
+  HWP:
+    - TEST1
+    - TEST2
+  PICO:
+    - TEST1
+    - TEST2
+  LIGHT:
+    - TEST1
+    - TEST2
+  CTRL:
+    - TEST1
+    - TEST2
+  HRF:
+    - TEST1
+    - TEST2
+  RFHOLD:
+    - TEST1
+    - TEST2
+  LSR:
+    - TEST1
+    - TEST2
+  VALV:
+    - TEST1
+    - TEST2
+  PROTE:
+    - TEST1
+    - TEST2
+  PROTCH: PROTE
+  PROTCL: PROTE
+  PROTG: PROTE
+  PROTT: PROTE
+  PROTVH: PROTE
+  PROTVL: PROTE
+  PROTL01: PROTE
+  4C-PM:
+    - TEST1
+    - TEST2
+  LIN:
+    - TEST1
+    - TEST2
+  SHTR:
+    - TEST1
+    - TEST2
+classPVNames:
+  MAG:
+    - EX1: TEST1
+    - EX2: TEST1
+  BPM:
+    - EX1: TEST1
+    - EX2: TEST1
+  BAM:
+    - EX1: TEST1
+    - EX2: TEST1
+  BLM:
+    - EX1: TEST1
+    - EX2: TEST1
+  CAM:
+    - EX1: TEST1
+    - EX2: TEST1
+  CS:
+    - EX1: TEST1
+    - EX2: TEST1
+  LED:
+    - EX1: TEST1
+    - EX2: TEST1
+  Lighting:
+    - EX1: TEST1
+    - EX2: TEST1
+  SCR:
+    - EX1: TEST1
+    - EX2: TEST1
+  WCM:
+    - EX1: TEST1
+    - EX2: TEST1
+  ICT:
+    - EX1: TEST1
+    - EX2: TEST1
+  FCUP:
+    - EX1: TEST1
+    - EX2: TEST1
+  IMG:
+    - EX1: TEST1
+    - EX2: TEST1
+  EM:
+    - EX1: TEST1
+    - EX2: TEST1
+  HWP:
+    - EX1: TEST1
+    - EX2: TEST1
+  PICO:
+    - EX1: TEST1
+    - EX2: TEST1
+  PID:
+    - EX1: TEST1
+    - EX2: TEST1
+  LLRF:
+    - EX1: TEST1
+    - EX2: TEST1
+  RFModulator:
+    - EX1: TEST1
+    - EX2: TEST1
+  Shutter:
+    - EX1: TEST1
+    - EX2: TEST1
+  Valve:
+    - EX1: TEST1
+    - EX2: TEST1
+  RFProtection:
+    - EX1: TEST1
+    - EX2: TEST1
+  RFHeartbeat:
+    - EX1: TEST1
+    - EX2: TEST1
+elementTypes:
+    DIPOLE: Dipole
+    QUADRUPOLE: Quadrupole
+    SEXTUPOLE: Sextupole
+    HORIZONTAL_CORRECTOR: Horizontal_Corrector
+    VERTICAL_CORRECTOR: Vertical_Corrector
+    SOLENOID: Solenoid
+    BPM: BPM
+    BAM: BAM
+    BLM: BLM
+    Camera: Camera
+    Screen: Screen
+    Charge: ChargeDiagnostic
+    IMG: VacuumGuage
+    LaserEnergyMeter: LaserEnergyMeter
+    LaserHWP: LaserHalfWavePlate
+    LaserMirror: LaserMirror
+    Lighting: Lighting
+    LinacPID: PID
+    LLRF: LLRF
+    RFModulator: RFModulator
+    Shutter: Shutter
+    Valve: Valve
+    RFProtection: RFProtection
+    RFHeartbeat: RFHeartbeat
+PVTypes:
+    Magnet: MagnetPV
+    BPM: BPMPV
+    BAM: BAMPV
+    BLM: BLMPV
+    Camera: CameraPV
+    Screen: ScreenPV
+    Charge: ChargeDiagnosticPV
+    IMG: VacuumGaugePV
+    LaserEnergyMeter: LaserEnergyMeterPV
+    LaserHWP: LaserHWPPV
+    LaserMirror: LaserMirrorPV
+    Lighting: LightingPV
+    LinacPID: PIDPV
+    LLRF: LLRFPV
+    RFModulator: RFModulatorPV
+    Shutter: ShutterPV
+    Valve: ValvePV
+    RFProtection: RFProtectionPV
+    RFHeartbeat: RFHeartbeatPV

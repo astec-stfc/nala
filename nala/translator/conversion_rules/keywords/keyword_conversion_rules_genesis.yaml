@@ -1,0 +1,25 @@
+general:
+  length: l
+wiggler:
+  horizontal_relative_transverse_gradient: gradx
+  vertical_relative_transverse_gradient: grady
+  horizontal_quadratic_rolloff: kx
+  vertical_quadratic_rolloff: kx
+  number_of_periods: nwig
+  period_length: lambdau
+  normalized_strength: aw
+fel_modulator:
+  horizontal_relative_transverse_gradient: gradx
+  vertical_relative_transverse_gradient: grady
+  horizontal_quadratic_rolloff: kx
+  vertical_quadratic_rolloff: kx
+  number_of_periods: nwig
+  period_length: lambdau
+  normalized_strength: aw
+quadrupole:
+  k1l: k1
+kicker:
+  horizontal_kick: cx
+  vertical_kick: cy
+marker:
+  {}
