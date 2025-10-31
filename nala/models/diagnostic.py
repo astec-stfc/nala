@@ -334,4 +334,9 @@ class Screen_Diagnostic(DiagnosticElement):
 
 
 class Charge_Diagnostic(DiagnosticElement):
+    """
+    Charge Diagnostic model.
+    """
+
     type: str = Field(alias="charge_type")
+    """Charge diagnostic type."""

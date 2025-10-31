@@ -27,12 +27,21 @@ Degree = pi / 180.0
 
 
 class Multipole(BaseModel):
-    """Single order magnetic multipole model."""
+    """
+    Single order magnetic multipole model.
+    """
 
     order: NonNegativeInt = 0
+    """Multipole order (0=dipole, 1=quadrupole, etc.)."""
+
     normal: float = 0.0
+    """Normal component of the multipole strength."""
+
     skew: float = 0.0
+    """Skew component of the multipole strength."""
+
     radius: float = 0.0
+    """Reference radius for the multipole strength."""
 
 
 multipoles = {
@@ -43,7 +52,9 @@ MultipolesData = create_model("Multipoles", **multipoles)
 
 
 class Multipoles(MultipolesData):
-    """Magnetic multipoles model."""
+    """
+    Magnetic multipoles model.
+    """
 
     @field_validator("*", mode="before")
     def validate_Multipole(cls, v: Union[List, dict]) -> Multipole:
@@ -85,9 +96,27 @@ class Multipoles(MultipolesData):
         }
 
     def normal(self, order: int) -> Union[int, float]:
+        """
+        Get the normal component of the multipole strength for a given order.
+
+        Args:
+            order (int): The order of the multipole (0=dipole, 1=quadrupole, etc.).
+
+        Returns:
+            Union[int, float]: The normal component of the multipole strength.
+        """
         return getattr(self, "K" + str(order) + "L").normal
 
     def skew(self, order: int) -> Union[int, float]:
+        """
+        Get the skew component of the multipole strength for a given order.
+
+        Args:
+            order (int): The order of the multipole (0=dipole, 1=quadrupole, etc.).
+
+        Returns:
+            Union[int, float]: The skew component of the multipole strength.
+        """
         return getattr(self, "K" + str(order) + "L").skew
 
     def __eq__(self, other) -> bool:
@@ -98,11 +127,28 @@ class Multipoles(MultipolesData):
 
 
 class FieldIntegral(BaseModel):
-    """Field integral coefficients model."""
+    """
+    Field integral coefficients model.
+    """
 
     coefficients: List[Union[int, float]] = [0]
+    """Integrated field coefficients."""
 
     def currentToK(self, current: float, energy: float) -> float:
+        """
+        Convert the current in the magnet to the normalized strength (K value).
+        The method calculates the normalized strength (K value) of the magnetic field
+        based on the provided current and energy. It uses the field integral coefficients
+        to compute the integrated field strength and applies a scaling factor based on
+        the speed of light and the beam energy.
+
+        Args:
+            current (float): The current flowing through the magnet (in amperes).
+            energy (float): The energy of the particle beam (in MeV).
+
+        Returns:
+            float: The normalized strength (K value) of the magnetic field.
+        """
         sign = np.copysign(1, current)
         ficmod = [i * int(sign) for i in self.coefficients[:-1]]
         coeffs = np.append(ficmod, self.coefficients[-1])
@@ -115,7 +161,9 @@ class FieldIntegral(BaseModel):
 
 
 class LinearSaturationFit(BaseModel):
-    """Linear + saturation fit coefficients model."""
+    """
+    Linear + saturation fit coefficients model.
+    """
 
     m: float = 0
     I_max: NonNegativeFloat = 0
@@ -137,7 +185,7 @@ class LinearSaturationFit(BaseModel):
             return cls(**{k: v for k, v in zip(cls.model_fields.keys(), coeff_list)})
         elif isinstance(v, (list, tuple)):
             assert len(v) == len(cls.model_fields.keys())
-            return cls(**{k: v for k, v in zip(cls.model_fields.keys(), coeff_list)})
+            return cls(**{k: v for k, v in zip(cls.model_fields.keys(), v)})
         else:
             raise ValueError(
                 "LinearSaturationFit should be a string or a list of floats"
@@ -152,7 +200,7 @@ class LinearSaturationFit(BaseModel):
             assert len(v) == len(self.model_fields.keys())
             [setattr(self, k, v) for k, v in zip(self.model_fields.keys(), v)]
 
-    def currentToK(self, current: float, momentum: float | None = None) -> float:
+    def currentToK(self, current: float, momentum: float | None = None) -> Dict:
         """
         Convert the current in the magnet to the normalized strength (K value).
 
@@ -216,6 +264,21 @@ class LinearSaturationFit(BaseModel):
         return self.KToCurrent(KL / (L / 1000), momentum)
 
     def KToCurrent(self, K: float | dict, momentum: float) -> float:
+        """
+        Convert the normalized strength (K value) of the magnetic field to the corresponding current.
+        This method calculates the current required to produce a given normalized strength (K value)
+        of the magnetic field, based on the magnet's linear and saturation fit coefficients. It accounts
+        for both linear and nonlinear (saturation) behavior of the magnet.
+
+        Args:
+            K (float): The normalized strength (K value) of the magnetic field.
+                OR
+            dict: A dictionary containing the K value and its gradient.
+            momentum (float): The momentum of the particle beam (in MeV/c).
+
+        Returns:
+            float: The current (in amperes) required to produce the given K value.
+        """
         m, I_max, f, a, I0, d, L = list(self.coefficients)
         if isinstance(K, dict):
             if "K" in K:
@@ -224,7 +287,7 @@ class LinearSaturationFit(BaseModel):
                 K = K["KL"] / (L / 1000)
             else:
                 raise ValueError(f"K value not found in the dictionary {K}")
-        int_strength = 1e6 * K * L * momentum / (speed_of_light)
+        int_strength = 1e6 * K * L * momentum / speed_of_light
         abs_str = abs(int_strength)
         linear_current = int_strength / m
         if abs(linear_current) < I_max:
@@ -251,26 +314,63 @@ class LinearSaturationFit(BaseModel):
 
 
 class MagneticElement(IgnoreExtra):
-    """Magnetic info model."""
+    """
+    Magnetic info model.
+    """
 
     order: int = Field(repr=False, default=-1, frozen=True)
+    """Magnetic order"""
+
     skew: bool = False
+    """Flag to indicate if the multipole is skew."""
+
     length: NonNegativeFloat = Field(default=0.0, alias="magnetic_length")
+    """Magnetic length [m]."""
+
     multipoles: Multipoles = Multipoles()
+    """Magnetic multipoles."""
+
     systematic_multipoles: Multipoles = Multipoles()
+    """Systematic magnetic multipoles."""
+
     random_multipoles: Multipoles = Multipoles()
-    field_integral_coefficients: FieldIntegral = None #FieldIntegral()
-    linear_saturation_coefficients: LinearSaturationFit = None #LinearSaturationFit()
-    settle_time: float = None # Field(alias="mag_set_max_wait_time", default=45.0)
+    """Random magnetic multipoles."""
+
+    field_integral_coefficients: FieldIntegral | None = None #FieldIntegral()
+    """Field integral coefficients."""
+
+    linear_saturation_coefficients: LinearSaturationFit | None  = None #LinearSaturationFit()
+    """Linear saturation fit coefficients."""
+
+    settle_time: float | None = None # Field(alias="mag_set_max_wait_time", default=45.0)
+    """Maximum time to wait for the magnet current to settle [s]."""
+
     entrance_edge_angle: float | str = Field(default=0.0)
+    """Entrance edge angle in degrees; can be "angle" which uses the bend angle."""
+
     exit_edge_angle: float | str = Field(default=0.0)
+    """Exit edge angle in degrees; can be "angle" which uses the bend angle."""
+
     gap: float = Field(default=0.032)
+    """Magnetic gap [m]."""
+
     bore: float = Field(default=0.037)
+    """Magnetic bore radius [m]."""
+
     plane: str = Field(default="horizontal")
+    """Magnetic field plane: 'horizontal' or 'vertical'."""
+
     width: float = Field(default=0.2)
+    """Width of magnet [m]."""
+
     tilt: float = Field(default=0.0)
+    """Tilt angle of magnet [degrees]."""
+
     edge_field_integral: float = Field(default=0.5)
+    """Edge field integral."""
+
     fringe_field_coefficient: float = Field(default=0.0)
+    """Fringe field coefficient."""
 
     def __init__(self, /, **data: Any) -> None:
         super().__init__(**data)
@@ -301,8 +401,8 @@ class MagneticElement(IgnoreExtra):
     @field_validator("field_integral_coefficients", mode="before")
     @classmethod
     def validate_field_integral_coefficients(
-        cls, v: Union[str, List, dict]
-    ) -> FieldIntegral:
+        cls, v: Union[str, List, dict | None]
+    ) -> FieldIntegral | None:
         if isinstance(v, str):
             return FieldIntegral(coefficients=list(map(float, v.split(","))))
         elif isinstance(v, (list, tuple)):
@@ -311,6 +411,8 @@ class MagneticElement(IgnoreExtra):
             return FieldIntegral(**v)
         elif isinstance(v, FieldIntegral):
             return v
+        elif v is None:
+            return None
         else:
             raise ValueError(
                 "field_integral_coefficients should be a string or a list of floats"
@@ -318,11 +420,29 @@ class MagneticElement(IgnoreExtra):
 
     # @debug
     def KnL(self, order: int = None) -> Union[int, float]:
+        """
+        Get the integrated strength (KnL) of the multipole for a given order.
+
+        Args:
+            order (int, optional): The order of the multipole. Defaults to None, which uses self.order.
+
+        Returns:
+            Union[int, float]: The integrated strength (KnL) of the multipole.
+        """
         f = self.multipoles.skew if self.skew else self.multipoles.normal
         order = self.order if order is None else order
         return f(order) if order >= 0 else 0
 
     def Kn(self, order: int = None) -> Union[int, float]:
+        """
+        Get the normalized strength (Kn) of the multipole for a given order.
+
+        Args:
+            order (int, optional): The order of the multipole. Defaults to None, which uses self.order.
+
+        Returns:
+            Union[int, float]: The normalized strength (Kn) of the multipole.
+        """
         return self.knl(order) / self.length
 
     @property
@@ -350,15 +470,27 @@ class MagneticElement(IgnoreExtra):
     def half_gap(self) -> float:
         return self.gap / 2
 
-    def gradient(self, momentum: float):
+    def gradient(self, momentum: float) -> float:
+        """
+        Get the magnetic field gradient for the multipole.
+
+        Args:
+            momentum (float): The momentum of the particle beam (in MeV/c).
+
+        Returns:
+            float: The magnetic field gradient.
+        """
         Brho = 3.3356 * momentum / (1e9)
         return self.kl * Brho / self.length
 
 
 class Dipole_Magnet(MagneticElement):
-    """Dipole magnet with magnetic order 0."""
+    """
+    Dipole magnet with magnetic order 0.
+    """
 
     order: int = Field(repr=False, default=0, frozen=True)
+    """Magnetic order of the dipole."""
 
     @computed_field
     @property
@@ -367,9 +499,7 @@ class Dipole_Magnet(MagneticElement):
         Get the dipole bend radius -- l / theta.
 
         Returns
-        -------
-        float
-            The dipole bend radius
+            float: The dipole bend radius
         """
         return (
             self.length / self.angle
@@ -378,14 +508,26 @@ class Dipole_Magnet(MagneticElement):
         )
 
     def field_strength(self, momentum: float) -> float:
+        """
+        Get the dipole magnetic field strength.
+
+        Args:
+            momentum (float): The momentum of the particle beam (in eV/c).
+
+        Returns:
+            float: The dipole magnetic field strength.
+        """
         Brho = 3.3356 * momentum / (1e9)
         return self.rho * Brho / self.length
 
 
 class Quadrupole_Magnet(MagneticElement):
-    """Quadrupole with magnetic order 1."""
+    """
+    Quadrupole with magnetic order 1.
+    """
 
     order: int = Field(repr=False, default=1, frozen=True)
+    """Magnetic order of the quadrupole."""
 
     @property
     def k1l(self) -> float:
@@ -397,9 +539,12 @@ class Quadrupole_Magnet(MagneticElement):
 
 
 class Sextupole_Magnet(MagneticElement):
-    """Sextupole magnet with magnetic order 2."""
+    """
+    Sextupole magnet with magnetic order 2.
+    """
 
     order: int = Field(repr=False, default=2, frozen=True)
+    """Magnetic order of the sextupole."""
 
     @property
     def k2l(self) -> float:
@@ -410,9 +555,12 @@ class Sextupole_Magnet(MagneticElement):
         self.kl = value
 
 class Octupole_Magnet(MagneticElement):
-    """Octupole magnet with magnetic order 3."""
+    """
+    Octupole magnet with magnetic order 3.
+    """
 
     order: int = Field(repr=False, default=3, frozen=True)
+    """Magnetic order of the octupole."""
 
     @property
     def k3l(self) -> float:
@@ -540,16 +688,22 @@ class Wiggler_Magnet(IgnoreExtra):
 
     @property
     def normalized_strength(self) -> float:
-        return self.strength / np.sqrt(2)
+        if not self.helical:
+            return self.strength / np.sqrt(2)
+        else:
+            return self.strength
 
     @normalized_strength.setter
     def normalized_strength(self, aw: float) -> None:
-        self.strength = aw * np.sqrt(2)
+        if not self.helical:
+            self.strength = aw * np.sqrt(2)
+        else:
+            self.strength = aw
 
     @property
     def poles(self) -> int:
-        return self.num_periods * 2
+        return int(self.num_periods * 2)
 
     @poles.setter
     def poles(self, value: int) -> None:
-        self.num_periods = value / 2
+        self.num_periods = int(value / 2)

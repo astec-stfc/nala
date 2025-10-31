@@ -63,7 +63,7 @@ class MachineLayoutTranslator(MachineLayout):
             string += f"\n{section.name}: LINE = " + "{"
             for elem in section_with_drifts.keys():
                 string += f"{elem}, "
-            string = f"{string[:-2]}" + "}\n\n\n"
+            string = f"{string[:-2]}" + "};\n\n\n"
         return string
 
     def to_ocelot(self, save=False) -> Dict[str, "MagneticLattice"]:

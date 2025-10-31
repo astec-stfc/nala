@@ -89,19 +89,33 @@ class LaserElement(IgnoreExtra):
 
 
 class LaserHalfWavePlateElement(IgnoreExtra):
-    """Laser info model."""
+    """
+    Laser half-wave plate model.
+    """
 
     calibration_factor: float = Field()
+    """Calibration factor for the half-wave plate."""
+
     pv_type: str = Field(alias="laser_pv_type")
+    """Type of the laser PV."""
 
 class LaserEnergyMeterElement(IgnoreExtra):
-    """Laser info model."""
+    """
+    Laser energy meter model.
+    """
 
     calibration_factor: float = Field()
+    """Calibration factor for the energy meter, i.e. between measured value and actual laser energy."""
+
     pv_type: str = Field(alias="laser_pv_type")
+    """Type of the laser PV."""
 
 
 class LaserMirrorSense(IgnoreExtra):
+    """
+    Laser mirror sense model.
+    """
+
     left: float = Field(alias="left_sense")
     right: float = Field(alias="right_sense")
     up: float = Field(alias="up_sense")

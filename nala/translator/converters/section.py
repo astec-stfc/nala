@@ -242,7 +242,7 @@ class SectionLatticeTranslator(SectionLattice):
         string += f"{self.name}: LINE = " + "{"
         for elem in section_with_drifts.keys():
             string += f"{elem}, "
-        string = f"{string[:-2]}" + "}\n"
+        string = f"{string[:-2]}" + "};\n"
         return string
 
     def to_ocelot(self, save=False) -> "MagneticLattice":

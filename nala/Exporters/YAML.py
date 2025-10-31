@@ -10,7 +10,7 @@ def export_as_yaml(
 ) -> None:
     if filename is not None:
         with open(filename, "w") as yaml_file:
-            yaml.default_flow_style = True
+            yaml.default_flow_style = False
             dump = ele.base_model_dump()
             # dump["hardware_subclass"] = ele.__class__.__name__
             yaml.dump(dump, yaml_file)

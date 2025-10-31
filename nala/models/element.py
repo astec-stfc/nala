@@ -522,6 +522,10 @@ class Magnet(Element):
 class Dipole(Magnet):
     """
     Dipole element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the dipole.
+        magnetic (:class:`~nala.models.magnetic.Dipole_Magnet`): The magnetic attributes of the dipole.
     """
 
     hardware_type: str = Field(default="Dipole", frozen=True)
@@ -529,38 +533,73 @@ class Dipole(Magnet):
 
 
 class Quadrupole(Magnet):
-    """Quadrupole element."""
+    """
+    Quadrupole element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the quadrupole.
+        magnetic (:class:`~nala.models.magnetic.Quadrupole_Magnet`): The magnetic attributes of the quadrupole.
+    """
 
     hardware_type: str = Field(default="Quadrupole", frozen=True)
     magnetic: Quadrupole_Magnet = Field(default_factory=Quadrupole_Magnet)
 
 
 class Sextupole(Magnet):
-    """Sextupole element."""
+    """
+    Sextupole element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the sextupole.
+        magnetic (:class:`~nala.models.magnetic.Sextupole_Magnet`): The magnetic attributes of the sextupole.
+    """
 
     hardware_type: str = Field(default="Sextupole", frozen=True)
     magnetic: Sextupole_Magnet = Field(default_factory=Sextupole_Magnet)
 
 class Octupole(Magnet):
-    """Octupole element."""
+    """
+    Octupole element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the octupole.
+        magnetic (:class:`~nala.models.magnetic.Octupole_Magnet`): The magnetic attributes of the octupole.
+    """
 
     hardware_type: str = Field(default="Octupole", frozen=True)
     magnetic: Octupole_Magnet = Field(default_factory=Octupole_Magnet)
 
 class Horizontal_Corrector(Dipole):
-    """Horizontal Corrector element."""
+    """
+    Horizontal corrector element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the corrector.
+    """
 
     hardware_type: str = Field(default="Horizontal_Corrector", frozen=True)
 
 
 class Vertical_Corrector(Dipole):
-    """Vertical Corrector element."""
+    """
+    Vertical corrector element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the corrector.
+    """
 
     hardware_type: str = Field(default="Vertical_Corrector", frozen=True)
 
 
 class Combined_Corrector(Dipole):
-    """H&V Corrector element."""
+    """
+    Horizontal corrector element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the corrector.
+        Horizontal_Corrector (str): The horizontal corrector.
+        Vertical_Corrector (str): The vertical corrector.
+    """
 
     hardware_type: str = Field(default="Combined_Corrector", frozen=True)
     Horizontal_Corrector: str | None = Field(default=None, frozen=True)
@@ -568,26 +607,56 @@ class Combined_Corrector(Dipole):
 
 
 class Solenoid(Magnet):
-    """Solenoid element."""
+    """
+    Solenoid element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the solenoid.
+        magnetic (:class:`~nala.models.magnetic.Solenoid_Magnet`): The magnetic attributes of the solenoid.
+    """
+
     hardware_type: str = Field(default="Solenoid", frozen=True)
     magnetic: Solenoid_Magnet = Field(default_factory=Solenoid_Magnet)
 
 
 class NonLinearLens(Magnet):
-    """Non-linear lens element."""
+    """
+    Non-linear lens element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the NLL.
+        magnetic (:class:`~nala.models.magnetic.NonLinearLens_Magnet`): The magnetic attributes of the NLL.
+    """
+
     hardware_type: str = Field(default="NonLinearLens", frozen=True)
     magnetic: NonLinearLens_Magnet = Field(default_factory=NonLinearLens_Magnet)
 
 
 class Wiggler(Magnet):
-    """Undulator element."""
+    """
+    Wiggler element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the wiggler.
+        magnetic (:class:`~nala.models.magnetic.Wiggler_Magnet`): The magnetic attributes of the wiggler.
+        laser (:class:`~nala.models.laser.Laser_Magnet` or None): The laser associated with the wiggler.
+    """
+
     hardware_type: str = Field(default="Undulator", frozen=True)
     magnetic: Wiggler_Magnet = Field(default_factory=Wiggler_Magnet)
     laser: LaserElement | None = None
 
 
 class TwissMatch(Magnet):
-    """Dipole element."""
+    """
+    Twiss matching element. Used for changing the Twiss parameters of the beam.
+
+    Attributes:
+        hardware_type (str): The hardware type of the element.
+        hardware_class (str): The hardware class of the element.
+        simulation (:class:`~nala.models.simulation.TwissMatchSimulationElement`):
+        The simulation attributes of the matching element.
+    """
 
     hardware_type: str = Field(default="TwissMatch", frozen=True)
     hardware_class: str = Field(default="TwissMatch", frozen=True)
@@ -599,16 +668,27 @@ class Diagnostic(Element):
     Base class for representing diagnostics.
 
     Attributes:
-        simulation: :class:`~nala.models.simulation.DiagnosticSimulationElement`: The simulation
+        hardware_type (str): The hardware type of the diagnostic.
+        hardware_class (str): The hardware class of the diagnostic.
+        simulation: (:class:`~nala.models.simulation.DiagnosticSimulationElement`): The simulation
         attributes of the diagnostic (including its `output_filename`).
     """
+
     hardware_type: str = Field(default="Diagnostic", frozen=True)
     hardware_class: str = Field(default="Diagnostic", frozen=True)
     simulation: DiagnosticSimulationElement = Field(default_factory=DiagnosticSimulationElement)
 
 
 class Beam_Position_Monitor(Diagnostic):
-    """BPM element."""
+    """
+    BPM element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the diagnostic.
+        hardware_model (str): The specific hardware model of the diagnostic (i.e. Stripline, Cavity).
+        diagnostic: (:class:`~nala.models.diagnostic.Beam_Position_Monitor_Diagnostic`): The diagnostic
+        attributes of the BPM.
+    """
 
     hardware_type: str = Field(default="Beam_Position_Monitor", frozen=True, alias="BPM")
     hardware_model: str = Field(default="Stripline", frozen=True)
@@ -616,7 +696,15 @@ class Beam_Position_Monitor(Diagnostic):
 
 
 class Beam_Arrival_Monitor(Diagnostic):
-    """Beam arrival monitor element."""
+    """
+    BAM element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the diagnostic.
+        hardware_model (str): The specific hardware model of the diagnostic.
+        diagnostic: (:class:`~nala.models.diagnostic.Beam_Arrival_Monitor_Diagnostic`): The diagnostic
+        attributes of the BAM.
+    """
 
     hardware_type: str = Field(default="Beam_Arrival_Monitor", frozen=True, alias="BAM")
     hardware_model: str = Field(default="DESY", frozen=True)
@@ -624,7 +712,15 @@ class Beam_Arrival_Monitor(Diagnostic):
 
 
 class Bunch_Length_Monitor(Diagnostic):
-    """Beam loss monitor element."""
+    """
+    BLM element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the diagnostic.
+        hardware_model (str): The specific hardware model of the diagnostic.
+        diagnostic: (:class:`~nala.models.diagnostic.Bunch_Length_Monitor_Diagnostic`): The diagnostic
+        attributes of the BLM.
+    """
 
     hardware_type: str = Field(default="Bunch_Length_Monitor", frozen=True, alias="BLM")
     hardware_model: str = Field(default="CDR", frozen=True)
@@ -632,7 +728,15 @@ class Bunch_Length_Monitor(Diagnostic):
 
 
 class Camera(Diagnostic):
-    """Camera element."""
+    """
+    Camera element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the diagnostic.
+        hardware_model (str): The specific hardware model of the diagnostic.
+        diagnostic: (:class:`~nala.models.diagnostic.Camera_Diagnostic`): The diagnostic
+        attributes of the Camera.
+    """
 
     hardware_type: str = Field(default="Camera", frozen=True)
     hardware_model: str = Field(default="PCO", frozen=True)
@@ -640,7 +744,15 @@ class Camera(Diagnostic):
 
 
 class Screen(Diagnostic):
-    """Screen element."""
+    """
+    Screen element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the diagnostic.
+        hardware_model (str): The specific hardware model of the diagnostic.
+        diagnostic: (:class:`~nala.models.diagnostic.Screen_Diagnostic`): The diagnostic
+        attributes of the Screen.
+    """
 
     hardware_type: str = Field(default="Screen", frozen=True)
     hardware_model: str = Field(default="YAG", frozen=True)
@@ -660,49 +772,90 @@ class Screen(Diagnostic):
 
 
 class ChargeDiagnostic(Diagnostic):
-    """Charge Diagnostic element."""
+    """
+    Generic charge diagnostic element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the diagnostic.
+        diagnostic: (:class:`~nala.models.diagnostic.Charge_Diagnostic`): The diagnostic
+        attributes of the diagnostic.
+    """
 
     hardware_type: str = Field(default="ChargeDiagnostic", frozen=True)
     diagnostic: Charge_Diagnostic = Field(default_factory=Charge_Diagnostic)
 
 
 class Wall_Current_Monitor(ChargeDiagnostic):
-    """WCM Charge Diagnostic element."""
+    """
+    WCM charge diagnostic element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the diagnostic.
+    """
 
     hardware_type: str = Field(default="Wall_Current_Monitor", frozen=True, alias="WCM")
 
 
 class Faraday_Cup_Monitor(ChargeDiagnostic):
-    """FCM Charge Diagnostic element."""
+    """
+    FCM charge diagnostic element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the diagnostic.
+    """
 
     hardware_type: str = Field(default="Faraday_Cup_Monitor", frozen=True, alias="FCM")
 
 
 class Integrated_Current_Transformer(ChargeDiagnostic):
-    """ICT Charge Diagnostic element."""
+    """
+    ICT charge diagnostic element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the diagnostic.
+    """
 
     hardware_type: str = Field(default="Integrated_Current_Transformer", frozen=True, alias="ICT")
 
 
 class VacuumGauge(Element):
-    """Vacuum Gauge element."""
+    """
+    Vacuum gauge element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the gauge.
+        hardware_model (str): The hardware model of the gauge.
+    """
 
     hardware_type: str = Field(default="VacuumGauge", frozen=True)
     hardware_model: str = Field(default="IMG", frozen=True)
-    manufacturer: ManufacturerElement = Field(default_factory=ManufacturerElement)
 
 
 class Laser(Element):
-    """Laser Energy Meter element."""
+    """
+    Laser element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the laser.
+        hardware_model (str): The hardware model of the laser.
+        laser (:class:`~nala.models.laser.LaserElement`): The laser attributes of the laser.
+    """
 
     hardware_type: str = Field(default="Laser", frozen=True)
     hardware_model: str = Field(default="Laser", frozen=True)
-    manufacturer: ManufacturerElement = Field(default_factory=ManufacturerElement)
     laser: LaserElement = Field(default_factory=LaserElement)
 
 
 class LaserEnergyMeter(Element):
-    """Laser Energy Meter element."""
+    """
+    Laser energy meter element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the laser energy meter.
+        hardware_model (str): The hardware model of the laser energy meter.
+        laser (:class:`~nala.models.laser.LaserEnergyMeterElement`): The laser-related attributes of the
+        energy meter.
+    """
 
     hardware_type: str = Field(default="LaserEnergyMeter", frozen=True)
     hardware_model: str = Field(default="Gentec Photodiode", frozen=True)
@@ -710,7 +863,15 @@ class LaserEnergyMeter(Element):
 
 
 class LaserHalfWavePlate(Element):
-    """Laser Half Wave Plate element."""
+    """
+    Laser half-wave plate element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the HWP.
+        hardware_model (str): The hardware model of the HWP.
+        laser (:class:`~nala.models.laser.LaserHalfWavePlateElement`): The laser-related attributes of the
+        HWP.
+    """
 
     hardware_type: str = Field(default="LaserHalfWavePlate", frozen=True)
     hardware_model: str = Field(default="Newport", frozen=True)
@@ -718,7 +879,15 @@ class LaserHalfWavePlate(Element):
 
 
 class LaserMirror(Element):
-    """Laser Mirror element."""
+    """
+    Laser mirror element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the mirror.
+        hardware_model (str): The hardware model of the mirror.
+        laser (:class:`~nala.models.laser.LaserMirrorElement`): The laser-related attributes of the
+        mirror.
+    """
 
     hardware_type: str = Field(default="LaserMirror", frozen=True)
     hardware_model: str = Field(default="Planar", frozen=True)
@@ -726,10 +895,18 @@ class LaserMirror(Element):
 
 
 class Plasma(Element):
-    """Plasma element."""
+    """
+    Plasma element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the HWP.
+        simulation (:class:`~nala.models.simulation.PlasmaSimulationElement`): The simulation
+        attributes of the plasma.
+        plasma (:class:`~nala.models.plasma.PlasmaElement`): The plasma attributes of the plasma.
+        laser (:class:`~nala.models.laser.LaserElement` or None): The laser assosicated with the plasma
+    """
 
     hardware_type: str = Field(default="Plasma", frozen=True)
-    hardware_model: str = Field(default="Plasma", frozen=True)
     simulation: PlasmaSimulationElement = Field(default_factory=PlasmaSimulationElement)
     plasma: PlasmaElement = Field(default_factory=PlasmaElement)
     laser: LaserElement | None = None
@@ -764,8 +941,10 @@ class RFCavity(Element):
     RFCavity element.
 
     Attributes:
-        cavity: :class:`~nala.models.RF.RFCavityElement`: The RF cavity attributes of the element.
-        simulation: :class:`~nala.models.simulation.RFCavitySimulationElement`: The simulation
+        hardware_type (str): The hardware type of the RF cavity.
+        hardware_model (str): The specific hardware model of the RF cavity.
+        cavity (:class:`~nala.models.RF.RFCavityElement`): The RF cavity attributes of the element.
+        simulation: (:class:`~nala.models.simulation.RFCavitySimulationElement`): The simulation
         attributes of the RF cavity.
     """
 
@@ -780,8 +959,10 @@ class Wakefield(PhysicalBaseElement):
     Wakefield element.
 
     Attributes:
-        cavity: :class:`~nala.models.RF.WakefieldElement`: The wakefield cavity attributes of the element.
-        simulation: :class:`~nala.models.simulation.WakefieldSimulationElement`: The simulation
+        hardware_type (str): The hardware type of the wakefield.
+        hardware_model (str): The specific hardware model of the wakefield.
+        cavity: (:class:`~nala.models.RF.WakefieldElement`): The wakefield cavity attributes of the element.
+        simulation: (:class:`~nala.models.simulation.WakefieldSimulationElement`): The simulation
         attributes of the wakefield cavity.
     """
 
@@ -792,15 +973,32 @@ class Wakefield(PhysicalBaseElement):
 
 
 class RFDeflectingCavity(RFCavity):
-    """RFCavity element."""
+    """
+    RF Deflecting Cavity element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the RF cavity.
+        hardware_model (str): The specific hardware model of the RF cavity.
+        cavity (:class:`~nala.models.RF.RFDeflectingCavityElement`): The RF cavity attributes of the element.
+        simulation: (:class:`~nala.models.simulation.RFCavitySimulationElement`): The simulation
+        attributes of the RF cavity.
+    """
 
     hardware_type: str = Field(default="RFDeflectingCavity", frozen=True)
     hardware_model: str = Field(default="SBand", frozen=True)
     cavity: RFDeflectingCavityElement = Field(default_factory=RFDeflectingCavityElement)
+    simulation: RFCavitySimulationElement = Field(default_factory=RFCavitySimulationElement)
 
 
 class RFModulator(baseElement):
-    """RFModulator element."""
+    """
+    RF Modulator element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the RF modulator.
+        hardware_model (str): The specific hardware model of the RF modulator.
+        modulator (:class:`~nala.models.RF.RFModulatorElement`): The RF modulator attributes of the element.
+    """
 
     hardware_type: str = Field(default="RFModulator", frozen=True)
     hardware_model: str = Field(default="Thales", frozen=True)
@@ -808,7 +1006,14 @@ class RFModulator(baseElement):
 
 
 class RFProtection(baseElement):
-    """RFProtection element."""
+    """
+    RF Protection element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the RF protection system.
+        hardware_model (str): The specific hardware model of the RF protection system.
+        modulator (:class:`~nala.models.RF.RFProtectionElement`): The RF protection attributes of the element.
+    """
 
     hardware_type: str = Field(default="RFProtection", frozen=True)
     hardware_model: str = Field(default="PROT", frozen=True)
@@ -816,28 +1021,54 @@ class RFProtection(baseElement):
 
 
 class RFHeartbeat(baseElement):
-    """RFHeartbeat element."""
+    """
+    RF Heartbeat element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the RF heartbeat system.
+        heartbeat (:class:`~nala.models.RF.RFHeartbeatElement`): The RF heartbeat attributes of the element.
+    """
 
     hardware_type: str = Field(default="RFHeartbeat", frozen=True)
     heartbeat: RFHeartbeatElement = Field(default_factory=RFHeartbeatElement)
 
 
 class Shutter(Element):
-    """Shutter element."""
+    """
+    Shutter element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the shutter.
+        shutter (:class:`~nala.models.shutter.ShutterElement`): The shutter attributes of the element.
+    """
 
     hardware_type: str = Field(default="Shutter", frozen=True)
     shutter: ShutterElement = Field(default_factory=ShutterElement)
 
 
 class Valve(Element):
-    """Valve element."""
+    """
+    Vacuum valve element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the valve.
+        valve (:class:`~nala.models.shutter.ValveElement`): The valve attributes of the element.
+    """
 
     hardware_type: str = Field(default="Valve", frozen=True)
     valve: ValveElement = Field(default_factory=ValveElement)
 
 
 class Marker(PhysicalBaseElement):
-    """Marker element."""
+    """
+    Marker element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the marker.
+        hardware_model (str): The hardware model of the marker.
+        simulation (:class:`~nala.models.simulation.DiagnosticSimulationElement`): The simulation
+        attributes of the marker.
+    """
 
     hardware_type: str = Field(default="Marker", frozen=True)
     hardware_model: str = Field(default="Simulation", frozen=True)
@@ -845,7 +1076,15 @@ class Marker(PhysicalBaseElement):
 
 
 class Aperture(PhysicalBaseElement):
-    """Aperture element."""
+    """
+    Aperture element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the aperture.
+        hardware_model (str): The hardware model of the aperture.
+        aperture (:class:`~nala.models.simulation.DiagnosticSimulationElement`): The simulation
+        attributes of the aperture.
+    """
 
     hardware_type: str = Field(default="Aperture", frozen=True)
     hardware_model: str = Field(default="Simulation", frozen=True)
@@ -853,12 +1092,26 @@ class Aperture(PhysicalBaseElement):
 
 
 class Collimator(Aperture):
-    """Collimator element."""
+    """
+    Collimator element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the collimator.
+        hardware_model (str): The hardware model of the collimator.
+    """
 
     hardware_type: str = Field(default="Collimator", frozen=True)
     hardware_model: str = Field(default="Simulation", frozen=True)
 
 
 class Drift(PhysicalBaseElement):
+    """
+    Drift element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the marker.
+        simulation (:class:`~nala.models.simulation.DriftSimulationElement`): The simulation
+        attributes of the drift.
+    """
     hardware_type: str = Field(default="Drift", frozen=True)
     simulation: DriftSimulationElement = Field(default_factory=DriftSimulationElement)

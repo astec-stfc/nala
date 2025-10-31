@@ -1,11 +1,12 @@
 from pydantic import computed_field
 from warnings import warn
 from .base import BaseElementTranslator
-from nala.models.magnetic import MagneticElement, Solenoid_Magnet, Dipole_Magnet
+from nala.models.magnetic import MagneticElement, Solenoid_Magnet, Dipole_Magnet, Wiggler_Magnet
 from nala.models.simulation import MagnetSimulationElement
 from ..utils.functions import _rotation_matrix, chop, expand_substitution
 import numpy as np
 from .codes.gpt import gpt_ccs
+from ..converters import elements_Genesis
 
 def add(x, y):
     return x + y
@@ -749,3 +750,44 @@ class SolenoidTranslator(BaseElementTranslator):
         else:
             raise ValueError(f"Solenoid field type {self.field_type} not supported for GPT; see {self.name}")
         return output
+
+
+class WigglerTranslator(BaseElementTranslator):
+    magnetic: Wiggler_Magnet
+
+    simulation: MagnetSimulationElement
+
+    def to_genesis(self) -> str:
+        """
+        Generates a string representation of the object's properties in the Genesis format.
+
+        Returns
+        -------
+        str
+            A formatted string representing the object's properties in Elegant format.
+        """
+        self.start_write()
+        wholestring = ""
+        etype = self._convertType_Genesis(self.hardware_type)
+        if "mark" in etype.lower():
+            return f"{self.name}: {etype} = " + "{};\n"
+        string = f"{self.name}: {etype} = " + "{"
+        keys = []
+        for key, value in self.full_dump().items():
+            if (
+                    not key == "name"
+                    and not key == "type"
+                    and not key == "commandtype"
+                    and self._convertKeyword_Genesis(key) in elements_Genesis[etype]
+            ):
+                if value is not None:
+                    key = self._convertKeyword_Genesis(key)
+                    if key == "aw" and not self.magnetic.helical:
+                        value *= np.sqrt(2)
+                    value = 1 if value is True else value
+                    value = 0 if value is False else value
+                    if key not in keys:
+                        string += key + " = " + str(value) + ', '
+                    keys.append(key)
+        wholestring += string[:-2] + "};\n"
+        return wholestring

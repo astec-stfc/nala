@@ -80,7 +80,7 @@ class MachineModelTranslator(MachineModel):
             string += f"{name}: LINE = " + "{"
             for l in list(latt.keys()):
                 string += f"{l}, "
-            string = f"{string[:-2]}" + "}\n\n"
+            string = f"{string[:-2]}" + "};\n\n"
         return string
 
     def to_ocelot(self, save=False) -> Dict[str, Dict[str, "MagneticLattice"]]:

@@ -35,6 +35,7 @@ elegant:
   Plasma: Drift
 genesis:
   Dipole: drift
+  Quadrupole: quadrupole
   Sextupole: drift
   Octupole: drift
   Beam_Position_Monitor: drift
@@ -45,6 +46,7 @@ genesis:
   Collimator: drift
   Monitor: marker
   Solenoid: drift
+  Drift: drift
   Wall_Current_Monitor: drift
   Integrated_Current_Transformer: drift
   Faraday_Cup_Monitor: drift
@@ -62,7 +64,6 @@ genesis:
   APContour: drift
   Watch_Point: drift
   Wakefield: drift
-  Drift: drift
   Horizontal_Corrector: corrector
   Vertical_Corrector: corrector
   Combined_Corrector: corrector

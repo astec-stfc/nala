@@ -68,7 +68,7 @@ class ModelBase(BaseModel):
     """Base Model that ignores extra fields."""
 
     def base_model_dump(self) -> dict:
-        return convert_numpy_types(self.model_dump())
+        return convert_numpy_types(self.model_dump(exclude_none=True))
 
 
 class IgnoreExtra(ModelBase):

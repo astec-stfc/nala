@@ -283,12 +283,8 @@ class BaseElementTranslator(Element):
                     and self._convertKeyword_Genesis(key) in elements_Genesis[etype]
             ):
                 if value is not None:
-                    key = self._convertKeyword_Elegant(key)
-                    if value == "angle":
-                        value = self.magnetic.angle
-                    elif value == "angle/2":
-                        value = self.magnetic.angle / 2
-                    elif key in ["k1", "k2", "k3", "k4", "k5", "k6"]:
+                    key = self._convertKeyword_Genesis(key)
+                    if key in ["k1", "k2", "k3", "k4", "k5", "k6"]:
                         value = getattr(self, f"{key}l")
                     value = 1 if value is True else value
                     value = 0 if value is False else value
