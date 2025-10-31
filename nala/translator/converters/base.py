@@ -272,7 +272,7 @@ class BaseElementTranslator(Element):
         wholestring = ""
         etype = self._convertType_Genesis(self.hardware_type)
         if "mark" in etype.lower():
-            return f"{self.name}: {etype} = " + "{};\n"
+            return f"{self.name}: {etype} = " + "{dumpbeam = 1};\n"
         string = f"{self.name}: {etype} = " + "{"
         keys = []
         for key, value in self.full_dump().items():
