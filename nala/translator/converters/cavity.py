@@ -3,9 +3,11 @@ import numpy as np
 from .base import BaseElementTranslator
 from nala.models.RF import RFCavityElement
 from nala.models.simulation import RFCavitySimulationElement
+from nala.translator.utils.fields import field
 
 from ..converters import (
     elements_Elegant,
+    elements_Opal,
 )
 
 class RFCavityTranslator(BaseElementTranslator):
@@ -382,6 +384,63 @@ class RFCavityTranslator(BaseElementTranslator):
                     value = 3 * self.get_cells()
                 properties.update({key: value})
         return self.name, obj, properties
+
+    def to_opal(self, sval: float, designenergy: float | None = None) -> str:
+        """
+        Generates a string representation of the object's properties in the OPAL format.
+
+        Parameters
+        ----------
+        sval: float
+            S-position of the element
+        designenergy: float, optional
+            Beam energy at element in MeV
+
+        Returns
+        -------
+        str
+            A formatted string representing the object's properties in OPAL format.
+        """
+        self.start_write()
+        etype = self._convertType_Opal(self.hardware_type)
+        if self.structure_type == "TravellingWave":
+            etype = "travelingwave"
+        wholestring = self.name.replace('-', '_') + ": " + etype
+        field_file_name = self.generate_field_file_name(
+            self.simulation.field_definition, code="opal"
+        )
+        if etype.lower() == "drift" or self.simulation.field_definition is None:
+            return ""
+        for key, value in self.full_dump().items():
+            if (
+                    not key == "name"
+                    and not key == "type"
+                    and not key == "commandtype"
+                    and self._convertKeyword_Opal(key) in elements_Opal[etype]
+            ):
+                if value is not None:
+                    key = self._convertKeyword_Opal(key)
+                    if key == "lag":
+                        value = -value * np.pi / 180
+                    if key == "freq":
+                        value = value / 1e6
+                    if key == "volt":
+                        value = value / 1e6
+                    val = 1 if value is True else value
+                    val = 0 if value is False else val
+                    if val is not None:
+                        tmpstring = ", " + key + " = " + str(val)
+                        wholestring += tmpstring
+        if isinstance(self.simulation.field_definition, field):
+            wholestring += ", fmapfn = \"" + self.generate_field_file_name(
+                self.simulation.field_definition, code="opal"
+            ) + "\""
+            if self.structure_type == "TravellingWave":
+                mode = float(self.simulation.field_definition.mode_numerator) / float(
+                    self.simulation.field_definition.mode_denominator)
+                wholestring += f", mode = {mode}"
+        wholestring += f", ELEMEDGE = {sval};\n"
+        return wholestring
 
     def get_cells(self) -> int:
         """

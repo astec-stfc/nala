@@ -627,7 +627,7 @@ class Solenoid_Magnet(IgnoreExtra):
         if "ks" in data:
             self.ks = data["ks"]
         elif "field_amplitude" in data:
-            self.ks = data["field_amplitude"] * self.length
+            self.ks = data["field_amplitude"] / self.length
         # else:
         #     self.ks = 0
         # setattr(self.fields, 'S'+str(self.order)+'L', self.ks)
@@ -639,14 +639,22 @@ class Solenoid_Magnet(IgnoreExtra):
             return FieldIntegral(coefficients=list(map(float, v.split(","))))
         elif isinstance(v, (list, tuple)):
             return FieldIntegral(coefficients=list(v))
-        elif isinstance(v, (dict)):
+        elif isinstance(v, dict):
             return FieldIntegral(**v)
-        elif isinstance(v, (FieldIntegral)):
+        elif isinstance(v, FieldIntegral):
             return v
         else:
             raise ValueError(
                 "field_integral_coefficients should be a string or a list of floats"
             )
+
+    @property
+    def field_amplitude(self) -> Union[int, float]:
+        return self.ks / self.length
+
+    @field_amplitude.setter
+    def field_amplitude(self, fa: float = 0) -> None:
+        self.ks = fa * self.length
 
     @property
     def ks(self) -> Union[int, float]:

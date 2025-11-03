@@ -8,6 +8,7 @@ with open(
     type_conversion_rules = yaml.safe_load(infile)
     type_conversion_rules_Elegant = type_conversion_rules["elegant"]
     type_conversion_rules_Genesis = type_conversion_rules["genesis"]
+    type_conversion_rules_Opal = type_conversion_rules["opal"]
     type_conversion_rules_Names = type_conversion_rules["name"]
     type_conversion_rules_aliases = type_conversion_rules["aliases"]["elegant"]
 
@@ -46,6 +47,18 @@ with open(
     "r",
 ) as infile:
     elements_Cheetah = yaml.safe_load(infile)
+
+with open(
+    os.path.dirname(os.path.abspath(__file__)) + "/../conversion_rules/elements/elements_opal.yaml",
+    "r",
+) as infile:
+    elements_Opal = yaml.safe_load(infile)
+
+with open(
+    os.path.dirname(os.path.abspath(__file__)) + "/../conversion_rules/keywords/keyword_conversion_rules_opal.yaml",
+    "r",
+) as infile:
+    keyword_conversion_rules_opal = yaml.safe_load(infile)
 
 with open(
     os.path.dirname(os.path.abspath(__file__)) + "/../conversion_rules/keywords/keyword_conversion_rules_Xsuite.yaml",

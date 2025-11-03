@@ -289,3 +289,25 @@ def checkValue(self, d, default=None):
             if hasattr(self, d) and getattr(self, d) is not None
             else default
         )
+
+def tw_cavity_energy_gain(cavity):
+    """
+    Estimate energy gain in a travelling-wave RF cavity.
+
+    Parameters:
+        cavity (nala.models.element.RFCavity): RFCavity element
+
+    Returns:
+        float: Estimated energy gain [eV]
+    """
+
+    # Approximate effective accelerating gradient
+    E_acc = cavity.field_amplitude * np.sin(np.pi * cavity.mode_numerator * 2 / cavity.mode_denominator / 2)
+
+    # Total cavity length
+    L_total = cavity.n_cells * cavity.cell_length
+
+    # Energy gain in MeV (since 1 MV/m * 1 m = 1 MeV for charge = e)
+    delta_W = E_acc * L_total * np.cos(np.pi * cavity.phase / 180)
+
+    return delta_W

@@ -82,14 +82,14 @@ def write_opal_field_file(
         if radius is None:
             warn("Magnet radius not provided; defaulting to 10cm")
             radius = 0.1
-        rvals = [str(0), str(radius * 100), str(length), fourier]
-        zvals = [str(zmin), str(zmax), str(length)]
+        zvals = [str(zmin), str(zmax), str(length-1)]
+        rvals = [str(0), str(radius * 100), fourier]
         header = [head, zvals, rvals]
     elif self.field_type == "1DElectroDynamic":
         if frequency is None:
             warn("RF Frequency not provided to field class")
             return
-        head = ["ASTRADynamic", str(fourier)]
+        head = ["AstraDynamic", str(fourier)]
         freq = [str(frequency * 1e-6)]
         zdata = self.z.value.val
         ezdata = self.Ez.value.val

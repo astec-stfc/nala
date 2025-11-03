@@ -6,7 +6,11 @@ from nala.models.simulation import MagnetSimulationElement
 from ..utils.functions import _rotation_matrix, chop, expand_substitution
 import numpy as np
 from .codes.gpt import gpt_ccs
-from ..converters import elements_Genesis
+from nala.translator.utils.fields import field
+from ..converters import (
+    elements_Genesis,
+    elements_Opal,
+)
 
 def add(x, y):
     return x + y
@@ -608,6 +612,59 @@ class DipoleTranslator(BaseElementTranslator):
         else:
             return ccs
 
+    def to_opal(self, sval: float, designenergy: float | None = None) -> str:
+        """
+        Generates a string representation of the object's properties in the OPAL format.
+
+        Parameters
+        ----------
+        sval: float
+            S-position of the element
+        designenergy: float, optional
+            Beam energy at element in MeV
+
+        Returns
+        -------
+        str
+            A formatted string representing the object's properties in OPAL format.
+        """
+        # wholestring = ""
+        self.start_write()
+        etype = self._convertType_Opal(self.hardware_type)
+        if self.entrance_edge_angle == self.exit_edge_angle:
+            etype = "sbend"
+        wholestring = self.name.replace('-', '_') + ": " + etype
+        if etype.lower() == "drift" or self.physical.length == 0 or self.magnetic.angle == 0:
+            return ""
+        keys = []
+        for key, value in self.full_dump().items():
+            if (
+                    not key == "name"
+                    and not key == "type"
+                    and not key == "commandtype"
+                    and self._convertKeyword_Opal(key) in elements_Opal[etype]
+            ):
+                if value is not None:
+                    key = self._convertKeyword_Opal(key)
+                    if value == "angle":
+                        value = self.magnetic.angle
+                    elif value == "angle/2":
+                        value = self.magnetic.angle / 2
+                    elif key in ["k1", "k2", "k3", "k4", "k5", "k6"]:
+                        value = getattr(self, f"{key}l")
+                    val = 1 if value is True else value
+                    val = 0 if value is False else val
+                    tmpstring = ", " + key + " = " + str(val)
+                    if key not in keys:
+                        wholestring += tmpstring
+                        keys.append(key)
+        if etype == "monitor":
+            wholestring += f", OUTFN = \"{self.name}_opal\""
+        wholestring += f", DESIGNENERGY = {designenergy}"
+        wholestring += f", ELEMEDGE = {sval}"
+        wholestring += f", FMAPFN = \"1DPROFILE1-DEFAULT\";\n"
+        return wholestring
+
     #
     # @computed_field
     # @property
@@ -632,6 +689,11 @@ class SolenoidTranslator(BaseElementTranslator):
     magnetic: Solenoid_Magnet
 
     simulation: MagnetSimulationElement
+
+    @computed_field
+    @property
+    def ks(self) -> float:
+        return self.magnetic.ks
 
     def to_astra(self, n: int = 0, **kwargs: dict) -> str:
         """
@@ -750,6 +812,53 @@ class SolenoidTranslator(BaseElementTranslator):
         else:
             raise ValueError(f"Solenoid field type {self.field_type} not supported for GPT; see {self.name}")
         return output
+
+    def to_opal(self, sval: float, designenergy: float | None = None) -> str:
+        """
+        Generates a string representation of the object's properties in the OPAL format.
+
+        Parameters
+        ----------
+        sval: float
+            S-position of the element
+        designenergy: float, optional
+            Beam energy at element in MeV
+
+        Returns
+        -------
+        str
+            A formatted string representing the object's properties in OPAL format.
+        """
+        self.start_write()
+        etype = self._convertType_Opal(self.hardware_type)
+        wholestring = self.name.replace('-', '_') + ": " + etype
+        field_file_name = self.generate_field_file_name(
+            self.simulation.field_definition, code="opal"
+        )
+        keys = []
+        for key, value in self.full_dump().items():
+            if (
+                    not key == "name"
+                    and not key == "type"
+                    and not key == "commandtype"
+                    and self._convertKeyword_Opal(key) in elements_Opal[etype]
+            ):
+                if value is not None:
+                    key = self._convertKeyword_Opal(key)
+                    val = 1 if value is True else value
+                    val = 0 if value is False else val
+                    if key == "ks":
+                        val = self.magnetic.field_amplitude / self.magnetic.length
+                    if val is not None and key not in keys:
+                        tmpstring = ", " + key + " = " + str(val)
+                        wholestring += tmpstring
+                        keys.append(key)
+        if isinstance(self.simulation.field_definition, field):
+            wholestring += ", fmapfn = \"" + self.generate_field_file_name(
+                self.simulation.field_definition, code="opal"
+            ) + "\""
+        wholestring += f", ELEMEDGE = {sval};\n"
+        return wholestring
 
 
 class WigglerTranslator(BaseElementTranslator):

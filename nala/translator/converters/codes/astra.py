@@ -51,12 +51,7 @@ class astra_header(BaseModel):
 
     def write_ASTRA(self) -> str:
         """
-        Write the text for the ASTRA namelist based on its :attr:`~framework_dict`.
-
-        Parameters
-        ----------
-        n: int
-            Index of the ASTRA element
+        Write the text for the ASTRA namelist based on its attributes.
 
         Returns
         -------

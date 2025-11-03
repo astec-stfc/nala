@@ -1,13 +1,17 @@
-from nala.models.elementList import SectionLattice
-from nala.models.RF import WakefieldElement
-from nala.models.simulation import WakefieldSimulationElement, DiagnosticSimulationElement
 from typing import Dict, Any
 from warnings import warn
+import numpy as np
+
+from .magnet import DipoleTranslator
+from ...models.elementList import SectionLattice
+from ...models.RF import WakefieldElement
+from ...models.simulation import WakefieldSimulationElement, DiagnosticSimulationElement
+from .cavity import RFCavityTranslator
 from .converter import translate_elements
 from .diagnostic import DiagnosticTranslator
 from .wake import WakefieldTranslator
 from .codes.gpt import gpt_ccs, gpt_Zminmax
-from ..utils.fields import field
+from ..utils.functions import tw_cavity_energy_gain
 
 
 class SectionLatticeTranslator(SectionLattice):
@@ -18,6 +22,8 @@ class SectionLatticeTranslator(SectionLattice):
     csrtrack_headers: Dict = {}
 
     gpt_headers: Dict = {}
+
+    opal_headers: Dict = {}
 
     @classmethod
     def from_section(cls, section: SectionLattice) -> "SectionLatticeTranslator":
@@ -203,6 +209,58 @@ class SectionLatticeTranslator(SectionLattice):
                 zmax=endz + 1,
             )
             fulltext += zminmax.write_GPT()
+        return fulltext
+
+    def to_opal(self, energy: float = 0, breakstr: str="") -> str:
+        check_dict = [
+            "option",
+            "distribution",
+            "fieldsolver",
+            "beam",
+            "track",
+            "run",
+        ]
+        for k in check_dict:
+            if k not in self.opal_headers:
+                raise KeyError(f"Header {k} must be defined for OPAL.")
+        fulltext = ""
+        fulltext += self.opal_headers["option"].write_Opal()
+        fulltext += f'{breakstr}\n// LATTICE\n'
+        zstops = []
+        elem_dict = translate_elements(
+            list(self.elements.elements.values()),
+            master_lattice_location=self.master_lattice_location,
+            directory=self.directory,
+        )
+        written = []
+        svals = self.get_s_values(as_dict=True, at_entrance=True)
+        for d in elem_dict.values():
+            if isinstance(d, RFCavityTranslator):
+                if d.structure_type.lower() == "travellingwave":
+                    energy += tw_cavity_energy_gain(d)
+                else:
+                    energy += d.field_amplitude * np.cos(np.pi * d.phase / 180)
+            stnew = d.to_opal(sval=svals[d.name], designenergy=energy)
+            if len(stnew) > 0:
+                written.append(d.name)
+                fulltext += d.to_opal(sval=svals[d.name], designenergy=energy)
+            zstops.append(d.physical.end.z)
+        zstop = max(zstops)
+        self.opal_headers["track"].ZSTOP = zstop
+        fulltext += "\n" + self.name + ": LINE=("
+        for e, element in list(elem_dict.items()):
+            if len((fulltext + e).splitlines()[-1]) > 60:
+                fulltext += "\n"
+            if element.name in written:
+                fulltext += e.replace('-', '_') + ", "
+        fulltext = (fulltext[:-2] + ");\n")
+
+        fulltext += self.opal_headers["distribution"].write_Opal()
+        fulltext += self.opal_headers["fieldsolver"].write_Opal()
+        fulltext += self.opal_headers["beam"].write_Opal()
+        fulltext += self.opal_headers["track"].write_Opal()
+        fulltext += self.opal_headers["run"].write_Opal()
+        fulltext += "ENDTRACK;\n\n Quit;\n"
         return fulltext
 
     def to_elegant(self, charge: float = None) -> str:

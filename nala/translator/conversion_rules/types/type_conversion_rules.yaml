@@ -32,7 +32,7 @@ elegant:
   Wiggler: wiggler
   Laser: drift
   TwissMatch: twiss
-  Plasma: Drift
+  Plasma: drift
 genesis:
   Dipole: drift
   Quadrupole: quadrupole
@@ -70,7 +70,32 @@ genesis:
   Plasma: drift
   TwissMatch: drift
   Laser: drift
-
+opal:
+  Dipole: rbend
+  Quadrupole: quadrupole
+  Sextupole: sextupole
+  Beam_Position_Monitor: monitor
+  Beam_Arrival_Monitor: monitor
+  Bunch_Length_Monitor: monitor
+  Screen: monitor
+  RCollimator: monitor
+  Collimator: monitor
+  Monitor: monitor
+  Solenoid: solenoid
+  Wall_Current_Monitor: monitor
+  Integrated_Current_Transformer: monitor
+  Faraday_Cup_Monitor: monitor
+  RFCavity: rfcavity
+  RFDeflectingCavity: rfcavity
+  Wakefield: drift
+  Horizontal_Corrector: hkicker
+  Vertical_Corrector: vkicker
+  Combined_Corrector: kicker
+  Plasma: drift
+  TwissMatch: drift
+  Laser: drift
+  Aperture: monitor
+  Marker: monitor
 name:
   dia-bpm: beam_position_monitor
   dia-bam: beam_arrival_monitor

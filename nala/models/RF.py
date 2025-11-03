@@ -5,7 +5,7 @@ from .baseModels import IgnoreExtra, T, ModelBase
 
 
 class RFCavityElement(IgnoreExtra):
-    structure_Type: str = "TravellingWave"
+    structure_Type: str = "StandingWave"
     attenuation_constant: float = 0
     cell_length: float = 0.0333333333333333
     coupling_cell_length: float | None = 0.0
@@ -16,6 +16,13 @@ class RFCavityElement(IgnoreExtra):
     crest: float = 0
     phase: float = 0.0
     shunt_impedance: Union[float, None] = None
+    mode_numerator: float | None = None
+    mode_denominator: float | None = None
+
+    def model_post_init(self, __context):
+        if self.structure_Type.lower == "travellingwave" and any(
+                [self.mode_numerator is None and self.mode_denominator is None]):
+            raise ValueError("mode_numerator and mode_denominator must be defined for TravellingWave structure type")
 
 
 class WakefieldElement(IgnoreExtra):

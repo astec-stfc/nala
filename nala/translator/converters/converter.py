@@ -13,7 +13,7 @@ from nala.models.element import (
     Marker,
     Plasma,
     Laser,
-    Wiggler,
+    Wiggler, Combined_Corrector, Horizontal_Corrector, Vertical_Corrector,
 )
 
 from .base import BaseElementTranslator
@@ -35,7 +35,11 @@ def translate_elements(
         if isinstance(elem, Magnet):
             if isinstance(elem, Solenoid):
                 translator = SolenoidTranslator
-            elif isinstance(elem, Dipole):
+            elif isinstance(elem, Dipole) and not type(elem) in [
+                Combined_Corrector,
+                Horizontal_Corrector,
+                Vertical_Corrector,
+            ]:
                 translator = DipoleTranslator
             elif isinstance(elem, Wiggler):
                 translator = WigglerTranslator

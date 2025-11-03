@@ -209,6 +209,10 @@ class baseElement(IgnoreExtra):
             if isinstance(field_annotation, type) and issubclass(field_annotation, BaseModel):
                 paths.extend(cls._find_field_paths(attr_name, field_annotation, new_path))
 
+        for name, attr in vars(current_model).items():
+            if isinstance(attr, property) and name == attr_name:
+                paths.append(current_path + (name,))
+
         return paths
 
     def _resolve_attribute_path(self, attr_name: str) -> List[Tuple[str, ...]]:
@@ -270,9 +274,8 @@ class baseElement(IgnoreExtra):
                 f"Attribute '{name}' is ambiguous. Found at: {', '.join(path_strings)}. "
                 "Access explicitly (e.g., `main.physical.length`)."
             )
-        else:
-            # Exactly one location found: Return the nested value
-            return self._get_nested_attribute(paths[0])
+        # ✅ If property, getattr() will naturally return the computed value
+        return self._get_nested_attribute(paths[0])
 
     def __setattr__(self, name: str, value: Any) -> None:
         """
@@ -307,14 +310,13 @@ class baseElement(IgnoreExtra):
                 f"Cannot set ambiguous attribute '{name}'. Found at: {', '.join(path_strings)}. "
                 "Set explicitly (e.g., `main.physical.length = 10.0`)."
             )
-        else:
-            # Exactly one location found: Set the nested value
-            try:
-                self._set_nested_attribute(paths[0], value)
-            except Exception as e:
-                # Catch any potential Pydantic validation errors during setting
-                raise ValueError(
-                    f"Failed to set '{name}' at path '{'.'.join(paths[0])}' with value '{value}'. Error: {e}")
+            # ✅ If it's a property with a setter, Python handles it
+        try:
+            self._set_nested_attribute(paths[0], value)
+        except AttributeError as e:
+            raise AttributeError(
+                f"Attribute '{name}' at path '{'.'.join(paths[0])}' is read-only or missing a setter."
+            ) from e
 
     def to_CATAP(self) -> dict:
         return {

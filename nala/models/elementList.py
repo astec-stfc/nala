@@ -201,6 +201,57 @@ class SectionLattice(BaseLatticeModel):
                     newelements[name] = newdrift
         return newelements
 
+    def get_s_values(
+        self,
+        as_dict: bool = False,
+        at_entrance: bool = False,
+        starting_s: float = 0
+    ) -> list | dict:
+        """
+        Get the S values for the elements in the lattice.
+        This method calculates the cumulative length of the elements in the lattice,
+        starting from the entrance or the first element, depending on the `at_entrance` parameter.
+        It returns a list or dict of S values, which represent the positions of the elements along the lattice.
+
+        Parameters
+        ----------
+        as_dict: bool, optional
+            If True, returns a dictionary with element names as keys and their S values as values.
+        at_entrance: bool, optional
+            If True, calculates S values starting from the entrance of the lattice.
+            If False, calculates S values starting from the first element.
+        starting_s: float, optional
+            Initial s position
+
+        Returns
+        -------
+        list | dict
+            A list or dictionary of S values for the elements in the lattice.
+            If `as_dict` is True, returns a dictionary with element names as keys and their S values as values.
+            If `as_dict` is False, returns a list of S values.
+        """
+        elems = self.createDrifts()
+        s = [starting_s]
+        for e in list(elems.values()):
+            s.append(s[-1] + e.physical.length)
+        s = s[:-1] if at_entrance else s[1:]
+        if as_dict:
+            return dict(zip([e.name for e in elems.values()], s))
+        return list(s)
+
+    def get_s_names(self) -> Dict:
+        """
+        Get the names and S values of the elements in the lattice.
+
+        Returns
+        -------
+        Dict
+            A dict containing the name of an element and its corresponding S value.
+        """
+        s = self.getSValues()
+        names = self.getNames()
+        return {name: sval for name, sval in zip(names, s)}
+
 
 class MachineLayout(BaseLatticeModel):
     sections: Dict[str, SectionLattice]  # = Field(frozen=True)

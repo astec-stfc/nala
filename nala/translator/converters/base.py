@@ -11,14 +11,17 @@ from ..converters import (
     type_conversion_rules,
     type_conversion_rules_Elegant,
     type_conversion_rules_Genesis,
+    type_conversion_rules_Opal,
     elements_Elegant,
     elements_Genesis,
+    elements_Opal,
     keyword_conversion_rules_elegant,
     keyword_conversion_rules_genesis,
     keyword_conversion_rules_ocelot,
     keyword_conversion_rules_cheetah,
     keyword_conversion_rules_xsuite,
     keyword_conversion_rules_wake_t,
+    keyword_conversion_rules_opal,
 )
 from ..utils.fields import field
 from ..utils.functions import expand_substitution, checkValue
@@ -48,6 +51,7 @@ class BaseElementTranslator(Element):
         self.conversion_rules["xsuite"] = keyword_conversion_rules_xsuite["general"]
         self.conversion_rules["wake_t"] = keyword_conversion_rules_wake_t["general"]
         self.conversion_rules["genesis"] = keyword_conversion_rules_genesis["general"]
+        self.conversion_rules["opal"] = keyword_conversion_rules_opal["general"]
         if self.hardware_type.lower() in keyword_conversion_rules_elegant:
             self.conversion_rules["elegant"] = keyword_conversion_rules_elegant[self.hardware_type.lower()] | \
                                                keyword_conversion_rules_elegant["general"]
@@ -65,7 +69,10 @@ class BaseElementTranslator(Element):
                                               keyword_conversion_rules_wake_t["general"]
         if self.hardware_type.lower() in keyword_conversion_rules_genesis:
             self.conversion_rules["genesis"] = keyword_conversion_rules_genesis[self.hardware_type.lower()] | \
-                                              keyword_conversion_rules_genesis["general"]
+                                               keyword_conversion_rules_genesis["general"]
+        if self.hardware_type.lower() in keyword_conversion_rules_opal:
+            self.conversion_rules["opal"] = keyword_conversion_rules_opal[self.hardware_type.lower()] | \
+                                              keyword_conversion_rules_opal["general"]
         self.ccs = gpt_ccs(name="wcs", position=[0, 0, 0], rotation=[0, 0, 0])
         super().model_post_init(__context)
 
@@ -321,6 +328,55 @@ class BaseElementTranslator(Element):
                 setattr(obj, self._convertKeyword_WakeT(key), value)
         return obj
 
+    def to_opal(self, sval: float, designenergy: float | None = None) -> str:
+        """
+        Generates a string representation of the object's properties in the OPAL format.
+
+        Parameters
+        ----------
+        sval: float
+            S-position of the element
+        designenergy: float, optional
+            Beam energy at element in MeV
+
+        Returns
+        -------
+        str
+            A formatted string representing the object's properties in OPAL format.
+        """
+        # wholestring = ""
+        self.start_write()
+        etype = self._convertType_Opal(self.hardware_type)
+        wholestring = self.name.replace('-', '_') + ": " + etype
+        if etype.lower() == "drift":
+            return ""
+        keys = []
+        for key, value in self.full_dump().items():
+            if (
+                    not key == "name"
+                    and not key == "type"
+                    and not key == "commandtype"
+                    and self._convertKeyword_Opal(key) in elements_Opal[etype]
+            ):
+                if value is not None:
+                    key = self._convertKeyword_Opal(key)
+                    if value == "angle":
+                        value = self.magnetic.angle
+                    elif value == "angle/2":
+                        value = self.magnetic.angle / 2
+                    # elif key in ["k1", "k2", "k3", "k4", "k5", "k6"]:
+                    #     value = getattr(self, f"{key}l")
+                    val = 1 if value is True else value
+                    val = 0 if value is False else val
+                    tmpstring = ", " + key + " = " + str(val)
+                    if key not in keys:
+                        wholestring += tmpstring
+                        keys.append(key)
+        if etype == "monitor":
+            wholestring += f", OUTFN = \"{self.name}_opal\""
+        wholestring += f", ELEMEDGE = {sval};\n"
+        return wholestring
+
     def _convertType_Elegant(self, etype: str) -> str:
         """
         Converts the element type to the corresponding Elegant type using predefined rules.
@@ -359,10 +415,10 @@ class BaseElementTranslator(Element):
         if updated_type.lower() in keyword_conversion_rules_elegant:
             conversion_rules = keyword_conversion_rules_elegant[updated_type.lower()] | \
                                keyword_conversion_rules_elegant["general"]
-            element = elements_Elegant[self._convertType_Elegant(updated_type)]
+            element = elements_Elegant[self._convertType_Elegant(updated_type).lower()]
         else:
             conversion_rules = self.conversion_rules["elegant"]
-            element = elements_Elegant[self._convertType_Elegant(self.hardware_type)]
+            element = elements_Elegant[self._convertType_Elegant(self.hardware_type).lower()]
         for strip in ["", "simulation_", "cavity_", "magnetic_"]:
             stripped = keyword.replace(strip, "")
             if stripped in conversion_rules:
@@ -554,6 +610,56 @@ class BaseElementTranslator(Element):
             stripped = keyword.replace(strip, "")
             if stripped in conversion_rules:
                 return conversion_rules[stripped]
+        return keyword
+
+    def _convertType_Opal(self, etype: str) -> str:
+        """
+        Converts the element type to the corresponding Opal type using predefined rules.
+
+        Parameters
+        ----------
+        etype: str
+            The type of the element to be converted.
+
+        Returns
+        -------
+        str
+            The converted type of the element, or the original type if no conversion rule exists.
+        """
+        return (
+            type_conversion_rules_Opal[etype]
+            if etype in type_conversion_rules_Opal
+            else etype
+        )
+
+    def _convertKeyword_Opal(self, keyword: str, updated_type: str = "") -> str:
+        """
+        Converts a keyword to its corresponding Opal keyword using predefined rules.
+
+        Parameters
+        ----------
+        keyword: str:
+            The keyword to be converted.
+
+        Returns
+        -------
+        str
+            The converted keyword for Opal, or the original keyword if no conversion rule exists.
+
+        """
+        if updated_type.lower() in keyword_conversion_rules_opal:
+            conversion_rules = keyword_conversion_rules_opal[updated_type.lower()] | \
+                               keyword_conversion_rules_opal["general"]
+            element = elements_Opal[self._convertType_Opal(updated_type)]
+        else:
+            conversion_rules = self.conversion_rules["opal"]
+            element = elements_Opal[self._convertType_Opal(self.hardware_type)]
+        for strip in ["", "simulation_", "cavity_", "magnetic_"]:
+            stripped = keyword.replace(strip, "")
+            if stripped in conversion_rules:
+                return conversion_rules[stripped]
+            elif stripped in element.keys():
+                return stripped
         return keyword
 
     def _write_ASTRA_dictionary(self, d: dict, n: int | None = 1) -> str:
