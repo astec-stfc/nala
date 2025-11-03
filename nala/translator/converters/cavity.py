@@ -519,9 +519,9 @@ class RFCavityTranslator(BaseElementTranslator):
             # else:
             output += (
                     "map1D_TM"
-                    + "( "
+                    + "(\""
                     + self.ccs.name
-                    + ", "
+                    + "\", "
                     + ccs_label
                     + ", "
                     + value_text

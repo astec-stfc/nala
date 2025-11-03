@@ -111,9 +111,9 @@ class WakefieldTranslator(BaseElementTranslator):
                 )
                 output += (
                         "wakefield"
-                        + "( "
+                        + "(\" "
                         + ccs
-                        + ", "
+                        + "\", "
                         + ccs_label
                         + ", "
                         + value_text

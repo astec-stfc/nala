@@ -114,11 +114,12 @@ class ElementError(IgnoreExtra):
             raise ValueError("rotation should be a number or a list of floats")
 
     def __str__(self):
-        if any([getattr(self, k) != 0 for k in self.model_fields.keys()]):
+        cls = self.__class__
+        if any([getattr(self, k) != 0 for k in cls.model_fields]):
             return " ".join(
                 [
                     getattr(self, k).__repr__()
-                    for k in self.model_fields.keys()
+                    for k in cls.model_fields
                     if getattr(self, k) != 0
                 ]
             )
@@ -129,8 +130,9 @@ class ElementError(IgnoreExtra):
         return self.__class__.__name__ + "(" + self.__str__() + ")"
 
     def __eq__(self, other):
+        cls = self.__class__
         if other == 0:
-            return all([getattr(self, k) == 0 for k in self.model_fields.keys()])
+            return all([getattr(self, k) == 0 for k in cls.model_fields.keys()])
         else:
             return super().__eq__(other)
 
@@ -154,12 +156,12 @@ class PhysicalElement(IgnoreExtra):
     angle: float = 0.0
 
     def __str__(self):
-        # print({k: getattr(self, k) != 0 for k in self.model_fields.keys()})
-        if any([getattr(self, k) != 0 for k in self.model_fields.keys()]):
+        cls = self.__class__
+        if any([getattr(self, k) != 0 for k in cls.model_fields.keys()]):
             return " ".join(
                 [
                     str(k) + "=" + getattr(self, k).__repr__()
-                    for k in self.model_fields.keys()
+                    for k in cls.model_fields.keys()
                     if getattr(self, k) != 0
                 ]
             )

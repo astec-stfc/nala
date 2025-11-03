@@ -818,16 +818,13 @@ class BaseElementTranslator(Element):
         ValueError
             If `field_reference_position` is set to an invalid value that is not 'start', 'middle', or 'end'.
         """
-        if (
-                hasattr(self, "field_reference_position")
-                and self.field_reference_position is not None
-        ):
+        if self.simulation.field_reference_position is not None:
             try:
-                return getattr(self.physical, self.field_reference_position.lower()).model_dump()
+                return getattr(self.physical, self.simulation.field_reference_position.lower()).model_dump()
             except AttributeError:
                 warn(
                     "field_reference_position should be (start/middle/end) not" +
-                    self.field_reference_position +
+                    self.simulation.field_reference_position +
                     "; returning start"
                 )
         return self.physical.start.model_dump()

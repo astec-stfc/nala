@@ -284,7 +284,8 @@ class baseElement(IgnoreExtra):
         # First, allow Pydantic's internal __setattr__ to handle
         # attributes that belong directly to the 'main' model instance (e.g., private vars, dunder methods)
         # and its direct Pydantic fields ('physical', 'size').
-        if name in self.__dict__ or name in self.model_fields:
+        cls = self.__class__
+        if name in self.__dict__ or name in cls.model_fields:
             super().__setattr__(name, value)
             return
 
@@ -331,13 +332,14 @@ class baseElement(IgnoreExtra):
 
     @property
     def no_controls(self) -> str:
+        cls = self.__class__
         return (
             self.__class__.__name__
             + "("
             + " ".join(
                 [
                     k + "=" + getattr(self, k).__repr__()
-                    for k in self.model_fields.keys()
+                    for k in cls.model_fields.keys()
                     if k != "controls"
                 ]
             )

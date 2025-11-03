@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Union
 from pydantic import field_validator, BaseModel, ValidationInfo, Field
 from warnings import warn
 from ._functions import read_yaml, merge_two_dicts
-from .element import baseElement, Drift
+from .element import baseElement, Drift, PhysicalBaseElement
 from .physical import PhysicalElement, Position
 from .baseModels import ModelBase
 from .exceptions import LatticeError
@@ -22,7 +22,7 @@ def chunks(li, n):
 class BaseLatticeModel(ModelBase):
     name: str
     _basename: str
-    master_lattice_location: str = None
+    master_lattice_location: str | None = None
 
     def __add__(self, other: dict) -> dict:
         copy = getattr(self, self._basename).copy()
@@ -69,7 +69,8 @@ class ElementList(ModelBase):
     def __getitem__(self, item: str) -> int:
         return self.elements[item]
 
-    def names(self):
+    @property
+    def names(self) -> list:
         return [e.name for e in self.elements.values()]
 
     def index(self, element: Union[str, BaseModel]):
@@ -131,8 +132,8 @@ class SectionLattice(BaseLatticeModel):
     #     return data
 
     @property
-    def names(self):
-        return self.elements.names()
+    def names(self) -> list:
+        return self.elements.names
 
     def __str__(self):
         # return str(getattr(self, self._basename).__str__())
@@ -150,7 +151,7 @@ class SectionLattice(BaseLatticeModel):
             return getattr(self.elements, a)
 
     def _get_all_elements(self) -> ElementList:
-        return [self.elements[e] for e in self.order if e in self.elements.names()]
+        return [self.elements[e] for e in self.order if e in self.elements.names]
 
     def createDrifts(self):
         """Insert drifts into a sequence of 'elements'"""
@@ -160,6 +161,21 @@ class SectionLattice(BaseLatticeModel):
         newelements = dict()
 
         elements = self._get_all_elements()
+
+        # if any([x != y for x, y in zip(elements[0].physical.start.model_dump(), [0, 0, 0])]):
+        #     machine_area = elements[0].machine_area
+        #     self.order.insert(0, "initial_marker")
+        #     self.elements.elements.update(
+        #         {
+        #             "initial_marker": PhysicalBaseElement(
+        #                 name="initial_marker",
+        #                 hardware_class="Marker",
+        #                 hardware_type="Marker",
+        #                 machine_area=machine_area,
+        #             )
+        #         }
+        #     )
+        #     elements = self._get_all_elements()
 
         for elem in elements:
             originalelements[elem.name] = elem
@@ -239,23 +255,10 @@ class SectionLattice(BaseLatticeModel):
             return dict(zip([e.name for e in elems.values()], s))
         return list(s)
 
-    def get_s_names(self) -> Dict:
-        """
-        Get the names and S values of the elements in the lattice.
-
-        Returns
-        -------
-        Dict
-            A dict containing the name of an element and its corresponding S value.
-        """
-        s = self.getSValues()
-        names = self.getNames()
-        return {name: sval for name, sval in zip(names, s)}
-
 
 class MachineLayout(BaseLatticeModel):
     sections: Dict[str, SectionLattice]  # = Field(frozen=True)
-    master_lattice_location: str = None
+    master_lattice_location: str | None = None
     _basename: str = "sections"
 
     def model_post_init(self, __context):
@@ -282,8 +285,9 @@ class MachineLayout(BaseLatticeModel):
         else:
             self._all_elements = {}
 
+    @property
     def names(self):
-        return [e.name for e in getattr(self, self._basename).values()]
+        return list(self.sections.keys())
 
     def __str__(self):
         return str([k for k, v in self.sections.items()])
@@ -415,7 +419,7 @@ class MachineModel(ModelBase):
     elements: Dict[str, baseElement] = {}
     sections: Dict[str, SectionLattice] = {}
     lattices: Dict[str, MachineLayout] = {}
-    master_lattice_location: str = None
+    master_lattice_location: str | None = None
     _layouts: List[str] = None
     _section_definitions: Dict = {}
     _default_path: str = None

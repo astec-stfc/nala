@@ -95,9 +95,10 @@ class IgnoreExtra(ModelBase):
         return cls(**fields)
 
     def update(self, **kwargs):
+        cls = self.__class__
         [
             v.annotation.update(k)
-            for k, v in self.model_fields.items()
+            for k, v in cls.model_fields.items()
             if hasattr(v.annotation, "update")
         ]
         self.__dict__.update(kwargs)
@@ -117,16 +118,17 @@ class NumpyModel(ModelBase):
 
     @property
     def array(self) -> np.ndarray:
-        return np.array([getattr(self, a) for a in self.model_fields.keys()])
+        cls = self.__class__
+        return np.array([getattr(self, a) for a in cls.model_fields.keys()])
 
     @classmethod
     def from_list(cls: Type[T], vec: List[Union[float, int]]) -> T:
-        assert len(vec) == len(cls.model_fields)
+        assert len(vec) == len(cls.model_fields.keys())
         return cls(**dict(zip(list(cls.model_fields.keys()), vec)))
 
     @classmethod
     def from_values(cls: Type[T], *values: Union[float, int]) -> T:
-        assert len(values) == len(cls.model_fields)
+        assert len(values) == len(cls.model_fields.keys())
         return cls(**dict(zip(list(cls.model_fields.keys()), values)))
 
     def update(self, **kwargs):
@@ -142,18 +144,21 @@ class NumpyVectorModel(NumpyModel):
     """vector model using numpy arrays."""
 
     def __iter__(self) -> iter:
-        return iter([getattr(self, k) for k in self.model_fields.keys()])
+        cls = self.__class__
+        return iter([getattr(self, k) for k in cls.model_fields.keys()])
 
     def __eq__(self, other: Any) -> bool:
+        cls = self.__class__
         if other == 0 or other == 0.0 or other is None:
-            if all([getattr(self, k) == 0 for k in self.model_fields.keys()]):
+            if all([getattr(self, k) == 0 for k in cls.model_fields.keys()]):
                 return True
             return False
         return list(self) == list(other)
 
     def __neq__(self, other: Any) -> bool:
+        cls = self.__class__
         if other == 0 or other == 0.0 or other is None:
-            if all([getattr(self, k) == 0 for k in self.model_fields.keys()]):
+            if all([getattr(self, k) == 0 for k in cls.model_fields.keys()]):
                 return False
             return True
         return list(self) != list(other)
@@ -162,13 +167,16 @@ class NumpyVectorModel(NumpyModel):
 class objectList(IgnoreExtra):
 
     def __iter__(self) -> iter:
-        return iter(getattr(self, list(self.model_fields.keys())[0]))
+        cls = self.__class__
+        return iter(getattr(self, list(cls.model_fields.keys())[0]))
 
     def __str__(self) -> str:
-        return str(list(getattr(self, list(self.model_fields.keys())[0])))
+        cls = self.__class__
+        return str(list(getattr(self, list(cls.model_fields.keys())[0])))
 
     def __repr__(self) -> repr:
-        return repr(list(getattr(self, list(self.model_fields.keys())[0])))
+        cls = self.__class__
+        return repr(list(getattr(self, list(cls.model_fields.keys())[0])))
 
 
 class DeviceList(objectList):

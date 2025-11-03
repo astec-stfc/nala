@@ -1,5 +1,5 @@
 import unittest
-from PAdantic.models.element import Element, ElectricalElement, ManufacturerElement
+from nala.models.element import Element, ElectricalElement, ManufacturerElement
 
 
 class TestElement(unittest.TestCase):

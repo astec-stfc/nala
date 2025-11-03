@@ -242,6 +242,8 @@ class MagnetTranslator(BaseElementTranslator):
 
     def to_gpt(self, Brho: float = 0, ccs: str="wcs", *args, **kwargs) -> str:
         self.start_write()
+        if "corrector" in self.hardware_type.lower():
+            return ""
         ccs_label, value_text = self.ccs.ccs_text(
             self.physical.middle.model_dump(), self.physical.rotation.model_dump(),
         )
@@ -250,9 +252,9 @@ class MagnetTranslator(BaseElementTranslator):
             knl = knl / 2
         output = (
                 str(self.hardware_type.lower())
-                + "( "
+                + "(\""
                 + ccs
-                + ", "
+                + "\", "
                 + ccs_label
                 + ", "
                 + value_text
@@ -572,9 +574,9 @@ class DipoleTranslator(BaseElementTranslator):
             """
             output = "ccs( " + self.ccs.name + ", " + coord + ", " + new_ccs.name + ");\n"
             output += (
-                    "sectormagnet( "
+                    "sectormagnet(\""
                     + self.ccs.name
-                    + ", "
+                    + "\", "
                     + new_ccs.name
                     + ", "
                     + str(abs(self.magnetic.rho))
@@ -771,9 +773,9 @@ class SolenoidTranslator(BaseElementTranslator):
             """
             output = (
                     "map1D_B"
-                    + "( "
+                    + "(\""
                     + ccs
-                    + ", "
+                    + "\", "
                     + ccs_label
                     + ", "
                     + value_text
@@ -794,9 +796,9 @@ class SolenoidTranslator(BaseElementTranslator):
             """
             output = (
                     "map3D_B"
-                    + "( "
+                    + "(\" "
                     + ccs
-                    + ", "
+                    + "\", "
                     + ccs_label
                     + ", "
                     + value_text

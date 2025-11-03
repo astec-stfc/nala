@@ -89,9 +89,10 @@ class Multipoles(MultipolesData):
 
     @model_serializer
     def ser_model(self) -> Dict[str, Any]:
+        cls = self.__class__
         return {
             k: getattr(self, k)
-            for k in self.model_fields.keys()
+            for k in cls.model_fields.keys()
             if abs(getattr(self, k).normal) > 0 or abs(getattr(self, k).skew) > 0
         }
 
@@ -192,13 +193,14 @@ class LinearSaturationFit(BaseModel):
             )
 
     def update_from_string(self, v: Union[str, List]) -> None:
+        cls = self.__class__
         if isinstance(v, str):
             coeff_list = list(map(float, v.strip().split(",")))
-            assert len(coeff_list) == len(self.model_fields.keys())
-            [setattr(self, k, v) for k, v in zip(self.model_fields.keys(), coeff_list)]
+            assert len(coeff_list) == len(cls.model_fields.keys())
+            [setattr(self, k, v) for k, v in zip(cls.model_fields.keys(), coeff_list)]
         elif isinstance(v, (list, tuple)):
-            assert len(v) == len(self.model_fields.keys())
-            [setattr(self, k, v) for k, v in zip(self.model_fields.keys(), v)]
+            assert len(v) == len(cls.model_fields.keys())
+            [setattr(self, k, v) for k, v in zip(cls.model_fields.keys(), v)]
 
     def currentToK(self, current: float, momentum: float | None = None) -> Dict:
         """
@@ -594,9 +596,10 @@ class SolenoidFields(solenoidFieldsData):
 
     @model_serializer
     def ser_model(self) -> Dict[str, Any]:
+        cls = self.__class__
         return {
             k: getattr(self, k)
-            for k in self.model_fields.keys()
+            for k in cls.model_fields.keys()
             if abs(getattr(self, k)) > 0
         }
 

@@ -35,7 +35,7 @@ class SimulationElement(IgnoreExtra):
     wakefield_definition: SerializeAsAny[Any] = None
     """String pointing to wakefield definition"""
 
-    field_reference_position: Literal["start", "middle", "end"] = "middle"
+    field_reference_position: Literal["start", "middle", "end"] | None = None
     """Reference position for field file"""
 
     scale_field: int | float | bool = False

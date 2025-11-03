@@ -53,7 +53,8 @@ class PIDPhaseRange(IgnoreExtra):
         return self.__str__()
 
     def __iter__(self) -> iter:
-        return iter([getattr(self, k) for k in self.model_fields.keys()])
+        cls = self.__class__
+        return iter([getattr(self, k) for k in cls.model_fields.keys()])
 
 
 class PIDWeightRange(PIDPhaseRange):

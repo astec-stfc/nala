@@ -137,7 +137,7 @@ class gpt_element(BaseModel):
 
     objecttype: str = ""
 
-    exclude: List = ["objectname", "objecttype", "particle_definition"]
+    exclude: List = ["exclude", "objectname", "objecttype", "particle_definition"]
 
     def write_GPT(self, *args, **kwargs) -> str:
         """
@@ -171,10 +171,20 @@ class gpt_setfile(gpt_element):
     """Type of object"""
 
     set: str = '"beam"'
+    """Name of beam"""
 
     filename: str = '"output.gdf"'
+    """Output filename"""
 
     particle_definition: str = '"gdf"'
+    """Name of particle definition"""
+
+    time: float = None
+    """Mean time coordinate of particle #TODO does this belong here?"""
+
+    def model_post_init(self, __context):
+        super().model_post_init(__context)
+        self.exclude.extend(["time"])
 
 
 class gpt_charge(gpt_element):

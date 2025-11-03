@@ -96,7 +96,6 @@ class SectionLatticeTranslator(SectionLattice):
             master_lattice_location=self.master_lattice_location,
             directory=self.directory,
         )
-        fulltext = ""
         for i, element in enumerate(list(elem_dict.values())):
             if i == 0:
                 screen0pos = element.physical.start.z
@@ -130,31 +129,31 @@ class SectionLatticeTranslator(SectionLattice):
                 )
                 if self.gpt_headers["input"].particle_definition == "laser":
                     fulltext += (
-                        "screen( "
+                        "screen(\""
                         + ccs.name_as_str
-                        + ', "I", '
+                        + '\", "I", '
                         + str(screen0pos + screen_step_size)
                         + ", "
                         + str(relpos[2])
                         + ", "
                         + str(screen_step_size)
-                        + ', "OutputCCS",'
+                        + ', "OutputCCS", \"'
                         + ccs.name_as_str
-                        + ");\n"
+                        + "\");\n"
                     )
                 else:
                     fulltext += (
-                        "screen( "
+                        "screen(\""
                         + ccs.name
-                        + ', "I", '
+                        + '\", "I", '
                         + str(screen0pos)
                         + ", "
                         + str(relpos[2])
                         + ", "
                         + str(float(screen_step_size))
-                        + ', "OutputCCS",'
+                        + ', "OutputCCS", \"'
                         + ccs.name
-                        + ");\n"
+                        + "\");\n"
                     )
                 screen0pos = 0
                 ccs = new_ccs
@@ -175,33 +174,33 @@ class SectionLatticeTranslator(SectionLattice):
         )
         if self.gpt_headers["setfile"].particle_definition == "laser":
             fulltext += (
-                "screen( "
+                "screen(\""
                 + ccs.name
-                + ', "I", '
+                + '\", "I", '
                 + str(screen0pos + screen_step_size)
                 + ", "
                 + str(relpos[2])
                 + ", "
                 + str(screen_step_size)
-                + ', "OutputCCS",'
+                + ', "OutputCCS", \"'
                 + ccs.name
-                + ");\n"
+                + "\");\n"
             )
         else:
             fulltext += (
-                "screen( "
+                "screen(\""
                 + ccs.name
-                + ', "I", '
+                + '\", "I", '
                 + str(screen0pos)
                 + ", "
                 + str(relpos[2])
                 + ", "
                 + str(screen_step_size)
-                + ', "OutputCCS",'
+                + ', "OutputCCS", \"'
                 + ccs.name
                 # + ", \"GroupName\","
                 # + "\"SCREEN-" + ccs.name.strip("\"").upper() + "-END-01\""
-                + ");\n"
+                + "\");\n"
             )
             zminmax = gpt_Zminmax(
                 ECS='"wcs", "I"',

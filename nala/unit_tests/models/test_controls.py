@@ -1,5 +1,5 @@
 import unittest
-from PAdantic.models.control import ControlVariable, ControlsInformation
+from nala.models.control import ControlVariable, ControlsInformation
 
 
 class TestControlVariable(unittest.TestCase):
