@@ -98,6 +98,10 @@ class WakefieldTranslator(BaseElementTranslator):
         fringe_field_coefficient = 3.0 / self.cavity.cell_length
         output = ""
         if self.simulation.scale_kick > 0:
+            zcolumn = "z"
+            wzcolumn = "Wz"
+            wxcolumn = "Wx" if self.simulation.wakefield_definition.Wx.value is not None else ""
+            wycolumn = "Wy" if self.simulation.wakefield_definition.Wy.value is not None else ""
             for n in range(self.cavity.n_cells):
                 ccs_label, value_text = self.ccs.ccs_text(
                     [
@@ -111,9 +115,9 @@ class WakefieldTranslator(BaseElementTranslator):
                 )
                 output += (
                         "wakefield"
-                        + "(\" "
-                        + ccs
-                        + "\", "
+                        + '("'
+                        + self.ccs.name
+                        + '", '
                         + ccs_label
                         + ", "
                         + value_text
@@ -123,14 +127,14 @@ class WakefieldTranslator(BaseElementTranslator):
                         + str(fringe_field_coefficient)
                         + ', "'
                         + str(field_file_name)
-                        + '", '
-                        + self.simulation.z_column
-                        + ", "
-                        + self.simulation.wx_column
-                        + ", "
-                        + self.simulation.wy_column
-                        + ", "
-                        + self.simulation.wz_column
-                        + ");\n"
+                        + '", "'
+                        + zcolumn
+                        + '", "'
+                        + wxcolumn
+                        + '", "'
+                        + wycolumn
+                        + '", "'
+                        + wzcolumn
+                        + '");\n'
                 )
         return output

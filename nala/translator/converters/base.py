@@ -858,12 +858,17 @@ class BaseElementTranslator(Element):
                 and isinstance(self.simulation.wakefield_definition, str)
             ):
                 if hasattr(self, "cavity"):
+                    additional = {}
+                    if hasattr(self.cavity, "frequency"):
+                        additional.update({"frequency": self.cavity.frequency})
+                    if hasattr(self.cavity, "structure_Type"):
+                        additional.update({"structure_Type": self.cavity.structure_Type})
+                        cavity_type=self.cavity.structure_Type,
                     self.simulation.wakefield_definition = field(
                         filename=expand_substitution(self, self.simulation.wakefield_definition),
                         # field_type=self.field_type,
-                        frequency=self.cavity.frequency,
-                        cavity_type=self.cavity.structure_Type,
                         n_cells=self.cavity.n_cells,
+                        **additional,
                     )
                 else:
                     self.simulation.wakefield_definition = field(

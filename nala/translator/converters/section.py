@@ -2,7 +2,6 @@ from typing import Dict, Any
 from warnings import warn
 import numpy as np
 
-from .magnet import DipoleTranslator
 from ...models.elementList import SectionLattice
 from ...models.RF import WakefieldElement
 from ...models.simulation import WakefieldSimulationElement, DiagnosticSimulationElement
@@ -12,6 +11,7 @@ from .diagnostic import DiagnosticTranslator
 from .wake import WakefieldTranslator
 from .codes.gpt import gpt_ccs, gpt_Zminmax
 from ..utils.functions import tw_cavity_energy_gain
+from ..utils.fields import field
 
 
 class SectionLatticeTranslator(SectionLattice):
@@ -87,7 +87,7 @@ class SectionLatticeTranslator(SectionLattice):
             astrastr += "/ \n"
         return astrastr
 
-    def to_gpt(self, startz: float, endz: float, Brho: float = 0.0, screen_step_size: float = 0.1) -> str:
+    def to_gpt(self, startz: float, endz: float, Brho: float = 0.0) -> str:
         fulltext = ""
         for header in self.gpt_headers.values():
             fulltext += header.write_GPT()
@@ -98,65 +98,41 @@ class SectionLatticeTranslator(SectionLattice):
         )
         for i, element in enumerate(list(elem_dict.values())):
             if i == 0:
-                screen0pos = element.physical.start.z
                 ccs = gpt_ccs(
                     name="wcs",
                     position=element.physical.start.model_dump(),
                     rotation=element.physical.global_rotation.model_dump(),
                 )
             fulltext += element.to_gpt(Brho, ccs=ccs.name)
-            # if (
-            #     element.hardware_type.lower() == "rfcavity"
-            #     and hasattr(element.simulation, "wakefield_definition")
-            #     and isinstance(element.simulation.wakefield_definition, field)
-            # ):
-            #     w = WakefieldTranslator(
-            #         name=element.name + "_wake",
-            #         hardware_class="Wakefield",
-            #         hardware_type="Wakefield",
-            #         machine_area=element.machine_area,
-            #         physical=element.physical,
-            #         cavity=WakefieldElement(cell_length=element.cavity.cell_length, n_cells=element.cavity.n_cells),
-            #         simulation=WakefieldSimulationElement(
-            #             wakefield_definition=element.simulation.wakefield_definition),
-            #         directory=element.directory,
-            #     )
-            #     fulltext += w.to_gpt(Brho, ccs=ccs.name)
+            if (
+                element.hardware_type.lower() == "rfcavity"
+                and isinstance(element.simulation.wakefield_definition, field)
+            ):
+                w = WakefieldTranslator(
+                    name=element.name + "_wake",
+                    hardware_class="Wakefield",
+                    hardware_type="Wakefield",
+                    machine_area=element.machine_area,
+                    physical=element.physical,
+                    cavity=WakefieldElement(cell_length=element.cavity.cell_length, n_cells=element.cavity.n_cells),
+                    simulation=WakefieldSimulationElement(
+                        wakefield_definition=element.simulation.wakefield_definition,
+                    ),
+                    directory=element.directory,
+                )
+                fulltext += w.to_gpt(Brho, ccs=ccs.name)
             new_ccs = element.ccs
             if not new_ccs.name == ccs.name:
                 relpos, relrot = ccs.relative_position(
                     element.physical.middle.model_dump(), element.physical.global_rotation.model_dump()
                 )
-                if self.gpt_headers["input"].particle_definition == "laser":
-                    fulltext += (
-                        "screen(\""
-                        + ccs.name_as_str
-                        + '\", "I", '
-                        + str(screen0pos + screen_step_size)
-                        + ", "
-                        + str(relpos[2])
-                        + ", "
-                        + str(screen_step_size)
-                        + ', "OutputCCS", \"'
-                        + ccs.name_as_str
-                        + "\");\n"
-                    )
-                else:
-                    fulltext += (
-                        "screen(\""
-                        + ccs.name
-                        + '\", "I", '
-                        + str(screen0pos)
-                        + ", "
-                        + str(relpos[2])
-                        + ", "
-                        + str(float(screen_step_size))
-                        + ', "OutputCCS", \"'
-                        + ccs.name
-                        + "\");\n"
-                    )
-                screen0pos = 0
-                ccs = new_ccs
+            else:
+                relpos = element.physical.middle.model_dump()
+            screen0pos = 0
+            ccs = new_ccs
+            if element.hardware_class.lower() == "diagnostic":
+                fulltext += f'screen({ccs.name_as_str}, "I", {str(relpos[2])}, {ccs.name_as_str});\n'
+                # if self.gpt_headers["setfile"].particle_definition == "laser":
         lastelem = list(elem_dict.values())[-1]
         lastscreen = DiagnosticTranslator(
             name="end_screen",
@@ -167,47 +143,18 @@ class SectionLatticeTranslator(SectionLattice):
             physical=lastelem.physical,
         )
         fulltext += lastscreen.to_gpt(
-            Brho, ccs=ccs, output_ccs="wcs"
+            Brho, ccs=ccs.name, output_ccs="wcs"
         )
         relpos, relrot = ccs.relative_position(
             lastelem.physical.end.model_dump(), lastelem.physical.global_rotation.model_dump()
         )
-        if self.gpt_headers["setfile"].particle_definition == "laser":
-            fulltext += (
-                "screen(\""
-                + ccs.name
-                + '\", "I", '
-                + str(screen0pos + screen_step_size)
-                + ", "
-                + str(relpos[2])
-                + ", "
-                + str(screen_step_size)
-                + ', "OutputCCS", \"'
-                + ccs.name
-                + "\");\n"
-            )
-        else:
-            fulltext += (
-                "screen(\""
-                + ccs.name
-                + '\", "I", '
-                + str(screen0pos)
-                + ", "
-                + str(relpos[2])
-                + ", "
-                + str(screen_step_size)
-                + ', "OutputCCS", \"'
-                + ccs.name
-                # + ", \"GroupName\","
-                # + "\"SCREEN-" + ccs.name.strip("\"").upper() + "-END-01\""
-                + "\");\n"
-            )
-            zminmax = gpt_Zminmax(
-                ECS='"wcs", "I"',
-                zmin=startz - 0.1,
-                zmax=endz + 1,
-            )
-            fulltext += zminmax.write_GPT()
+        fulltext += f'screen({ccs.name_as_str}, "I", {str(relpos[2])}, {ccs.name_as_str});\n'
+        zminmax = gpt_Zminmax(
+            ECS='"wcs", "I"',
+            zmin=startz - 0.1,
+            zmax=endz + 0.1,
+        )
+        fulltext += zminmax.write_GPT()
         return fulltext
 
     def to_opal(self, energy: float = 0, breakstr: str="") -> str:

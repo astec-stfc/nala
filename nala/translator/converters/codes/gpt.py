@@ -403,7 +403,7 @@ class gpt_Zminmax(gpt_element):
     """Type of object"""
 
 
-    def _write_GPT(self, *args, **kwargs):
+    def write_GPT(self, *args, **kwargs):
         output = (
             str(self.objectname)
             + "("

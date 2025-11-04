@@ -785,7 +785,7 @@ class SolenoidTranslator(BaseElementTranslator):
                     + '", '
                     + array_names_string
                     + ", "
-                    + str(expand_substitution(self, self.get_field_amplitude))
+                    + str(expand_substitution(self, self.get_field_amplitude / self.magnetic.length))
                     + ");\n"
             )
         elif self.simulation.field_definition.field_type.lower() == "3dmagnetostatic":
@@ -808,7 +808,7 @@ class SolenoidTranslator(BaseElementTranslator):
                     + '", '
                     + array_names_string
                     + ", "
-                    + str(expand_substitution(self, self.get_field_amplitude))
+                    + str(expand_substitution(self, self.get_field_amplitude / self.magnetic.length))
                     + ");\n"
             )
         else:

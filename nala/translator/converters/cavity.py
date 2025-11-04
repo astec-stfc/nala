@@ -493,7 +493,7 @@ class RFCavityTranslator(BaseElementTranslator):
                     + "phi"
                     + subname
                     + " = "
-                    + str((self.cavity.crest + 90 - self.cavity.phase) % 360.0)
+                    + str((self.cavity.crest + 90 - self.cavity.phase + 0) % 360.0)
                     + "/deg;\n"
             )
             if self.structure_type == "TravellingWave":
