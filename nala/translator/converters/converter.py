@@ -13,11 +13,21 @@ from nala.models.element import (
     Marker,
     Plasma,
     Laser,
-    Wiggler, Combined_Corrector, Horizontal_Corrector, Vertical_Corrector,
+    Wiggler,
+    Combined_Corrector,
+    Horizontal_Corrector,
+    Vertical_Corrector,
+    NonLinearLens,
 )
 
 from .base import BaseElementTranslator
-from .magnet import MagnetTranslator, SolenoidTranslator, DipoleTranslator, WigglerTranslator
+from .magnet import (
+    MagnetTranslator,
+    SolenoidTranslator,
+    DipoleTranslator,
+    WigglerTranslator,
+    NonLinearLensTranslator,
+)
 from .cavity import RFCavityTranslator
 from .drift import DriftTranslator
 from .diagnostic import DiagnosticTranslator
@@ -43,6 +53,8 @@ def translate_elements(
                 translator = DipoleTranslator
             elif isinstance(elem, Wiggler):
                 translator = WigglerTranslator
+            elif isinstance(elem, NonLinearLens):
+                translator = NonLinearLensTranslator
             else:
                 translator = MagnetTranslator
         elif type(elem) in [RFCavity, RFDeflectingCavity]:

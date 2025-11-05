@@ -209,7 +209,7 @@ class SectionLattice(BaseLatticeModel):
                         machine_area=newelements[e[0]].machine_area,
                         hardware_class="drift",
                         physical=PhysicalElement(
-                            length=round(np.copysign(length, vector), 6),
+                            length=abs(round(np.copysign(length, vector), 6)),
                             middle=Position(x=x, y=y, z=z),
                             datum=Position(x=x, y=y, z=z),
                         ),

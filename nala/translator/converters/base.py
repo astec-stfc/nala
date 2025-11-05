@@ -238,8 +238,8 @@ class BaseElementTranslator(Element):
         if self.hardware_type in type_conversion_rules_Xsuite:
             obj = type_conversion_rules_Xsuite[self.hardware_type]
         else:
-            warn("Could not find hardware type {self.hardware_type} in xsuite conversion rules;"
-                 "setting as drift")
+            warn(f"Could not find hardware type {self.hardware_type} in xsuite conversion rules "
+                 f"for element {self.name}; setting as drift")
             obj = type_conversion_rules_Xsuite["Drift"]
         properties = {}
         from xtrack.monitors import ParticlesMonitor

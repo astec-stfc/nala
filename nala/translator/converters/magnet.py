@@ -1,7 +1,7 @@
 from pydantic import computed_field
 from warnings import warn
 from .base import BaseElementTranslator
-from nala.models.magnetic import MagneticElement, Solenoid_Magnet, Dipole_Magnet, Wiggler_Magnet
+from nala.models.magnetic import MagneticElement, Solenoid_Magnet, Dipole_Magnet, Wiggler_Magnet, NonLinearLens_Magnet
 from nala.models.simulation import MagnetSimulationElement
 from ..utils.functions import _rotation_matrix, chop, expand_substitution
 import numpy as np
@@ -902,3 +902,6 @@ class WigglerTranslator(BaseElementTranslator):
                     keys.append(key)
         wholestring += string[:-2] + "};\n"
         return wholestring
+
+class NonLinearLensTranslator(BaseElementTranslator):
+    magnetic: NonLinearLens_Magnet

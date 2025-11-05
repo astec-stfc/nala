@@ -226,9 +226,8 @@ class XsuiteLatticeConverter(BaseModel):
                                         except AttributeError as e:
                                             print(e)
                 if "angle" in newobj["physical"]:
-                    print(newobj)
                     newobj["physical"].update({"angle": newobj["physical"]["angle"] * -1})
-                    print(newobj)
+                # if not newobj["hardware_class"] == "Drift":
                 self.elements.update({k: p_obj(**newobj)})
             else:
                 warn(f"Type conversion {type(v)} not implemented")

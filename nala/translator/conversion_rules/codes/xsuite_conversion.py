@@ -1,5 +1,6 @@
 from xtrack.beam_elements import Solenoid as Solenoid_xs
 from xtrack.beam_elements import Bend as Bend_xs
+from xtrack.beam_elements import DipoleEdge as DipoleEdge_xs
 from xtrack.beam_elements import Quadrupole as Quadrupole_xs
 from xtrack.beam_elements import Sextupole as Sextupole_xs
 from xtrack.beam_elements import Octupole as Octupole_xs
@@ -27,6 +28,7 @@ from nala.models.element import (
 
 xsuite_conversion_rules_reverse = {
     Bend_xs: Dipole,
+    DipoleEdge_xs: Marker,
     Solenoid_xs: Solenoid,
     Quadrupole_xs: Quadrupole,
     Sextupole_xs: Sextupole,
@@ -64,6 +66,7 @@ xsuite_conversion_rules = {
     "Bellows": Drift_xs,
     "Cleaner": Drift_xs,
     "Drift": Drift_xs,
+    "NonLinearLens": NonLinearLens_xs,
     "Combined_Corrector": Bend_xs,
     "Horizontal_Corrector": Bend_xs,
     "Vertical_Corrector": Bend_xs,
