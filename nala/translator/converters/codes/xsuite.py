@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict
 from pydantic_core import PydanticUndefinedType
 from typing import Dict, List
 import xtrack as xt
-from xtrack.beam_elements.elements import _HasKnlKsl
+from xtrack.beam_elements.elements import _HasKnlKsl, Bend
 from nala.models.elementList import (
     SectionLattice,
     MachineLayout,
@@ -48,6 +48,98 @@ class XsuiteLatticeConverter(BaseModel):
 
     layouts: Dict = {}
 
+    def rotation_matrix_from_survey(self, row):
+        """Builds rotation matrix (local→global) from survey row."""
+        R = np.array([
+            [row["ex"][0], row["ex"][1], row["ex"][2]],
+            [row["ey"][0], row["ey"][1], row["ey"][2]],
+            [row["ez"][0], row["ez"][1], row["ez"][2]],
+        ])
+        return R
+
+    def Ry(self, angle):
+        """Rotation matrix about local y axis."""
+        c, s = np.cos(angle), np.sin(angle)
+        return np.array([[c, 0, s],
+                         [0, 1, 0],
+                         [-s, 0, c]])
+
+    def compute_element_center(self, P0, R0, L, theta=0.0):
+        """
+        Given start position/orientation, return global center position and orientation.
+        theta is total bending angle (radians); positive = bend right (horizontal plane).
+        """
+        # --- position of midpoint in local coordinates ---
+        if abs(theta) < 1e-12:  # straight
+            local_mid = np.array([0.0, 0.0, L / 2])
+        else:
+            Rbend = L / theta
+            phi = theta / 2
+            local_mid = np.array([
+                Rbend * (1 - np.cos(phi)),  # x
+                0.0,  # y
+                Rbend * np.sin(phi)  # s
+            ])
+
+        # --- global midpoint ---
+        Pcenter = P0 + R0 @ local_mid
+
+        # --- global rotation at center ---
+        if abs(theta) < 1e-12:
+            Rcenter = R0
+        else:
+            Rcenter = R0 @ self.Ry(theta / 2)
+
+        return Pcenter, Rcenter
+
+    # Example for a batch of elements:
+    def midpoints_for_line(self, element_and_survey,
+                           local_axes_map=None):
+        """
+        Compute midpoints for many elements.
+
+        Inputs
+        - survey_positions: (N,3) array of start positions P0 for each element
+        - survey_rotations: (N,3,3) array of rotations R0 for each element
+          (R0 maps local->global)
+        - elements: sequence of element-objects or dicts, each must provide:
+            - length: float
+            - angle: float   # bending angle in radians; if absent treated as 0
+          Accepts any object where `getattr(el,'length')` and `getattr(el,'angle',0.0)` work,
+          or dict-like with keys 'length' and 'angle'.
+        - local_axes_map: see element_midpoint_global
+
+        Returns
+        - mids: (N,3) ndarray of midpoint positions
+        """
+        elem_pos = {}
+        yhat = np.array([0, 1, 0])  # assuming horizontal bending plane
+
+        for i, survey in enumerate(element_and_survey.values()):
+            el = self.line.elements[i]
+            # try several common attribute names for angle (xtrack names vary)
+            L = getattr(el, 'length', getattr(el, 'L', 0.0))
+            theta = getattr(el, 'angle', getattr(el, 'bending_angle', 0.0))
+            P0 = np.array([survey["x"], survey["y"], survey["z"]])
+            R0 = self.rotation_matrix_from_survey(survey)
+
+            Pmid, Rmid = self.compute_element_center(P0, R0, L, theta)
+            ex, ey, ez = Rmid[:, 0], Rmid[:, 1], Rmid[:, 2]
+
+            elem_pos.update(
+                {
+                    list(element_and_survey.keys())[i]: {
+                        "x": Pmid[0],
+                        "y": Pmid[1],
+                        "z": Pmid[2],
+                        "phi": survey["phi"],
+                        "psi": survey["psi"],
+                        "theta": survey["theta"],
+                    }
+                }
+            )
+        return elem_pos
+
     def create_element_dictionary(self):
         s = self.line.survey()._data
         elems = {k: v for k, v in zip(s["name"], self.line.elements)}
@@ -56,11 +148,15 @@ class XsuiteLatticeConverter(BaseModel):
                 "x": s["X"][i],
                 "y": s["Y"][i],
                 "z": s["Z"][i],
+                "ex": s["ex"][i],
+                "ey": s["ey"][i],
+                "ez": s["ez"][i],
                 "phi": (s["phi"][i] + np.pi) % (2*np.pi) - np.pi,
                 "psi": (s["psi"][i] + np.pi) % (2*np.pi) - np.pi,
                 "theta": (s["theta"][i] + np.pi) % (2*np.pi) - np.pi,
-            } for i in range(len(s["X"]))
+            } for i in range(len(s["X"][:-1]))
         }
+        survey = self.midpoints_for_line(survey)
         for k, v in elems.items():
             machine_area = "IOTA_v8pt4_madx"
             length = 0
@@ -112,6 +208,8 @@ class XsuiteLatticeConverter(BaseModel):
                                     print(e)
                                     newobj["magnetic"]["kl"] = getattr(v, name)
                                 newobj["magnetic"].update({name: getattr(v, name)})
+                                if name == "angle":
+                                    newobj["magnetic"]["kl"] = newobj["magnetic"]["kl"] * -1
                                 newobj["hardware_class"] = "Magnet"
                             if name in ["ks"]:
                                 newobj.update({"magnetic": {"ks": v.ks, "length": v.length}})
@@ -127,6 +225,10 @@ class XsuiteLatticeConverter(BaseModel):
                                             print(e)
                                         except AttributeError as e:
                                             print(e)
+                if "angle" in newobj["physical"]:
+                    print(newobj)
+                    newobj["physical"].update({"angle": newobj["physical"]["angle"] * -1})
+                    print(newobj)
                 self.elements.update({k: p_obj(**newobj)})
             else:
                 warn(f"Type conversion {type(v)} not implemented")

@@ -429,10 +429,10 @@ class Element(PhysicalBaseElement):
         controls: :class:`~nala.models.control.ControlsInformation` | None: The control system attributes of the element.
     """
 
-    electrical: ElectricalElement = Field(default_factory=ElectricalElement)
+    electrical: ElectricalElement | None = Field(default_factory=ElectricalElement)
     """Electrical attributes of the element."""
 
-    manufacturer: ManufacturerElement = Field(default_factory=ManufacturerElement)
+    manufacturer: ManufacturerElement | None= Field(default_factory=ManufacturerElement)
     """Manufacturer attributes of the element."""
 
     simulation: SimulationElement = Field(default_factory=SimulationElement)
@@ -465,7 +465,7 @@ class Magnet(Element):
     hardware_class: str = Field(default="Magnet", frozen=True)
     """Magnet hardware class."""
 
-    degauss: DegaussableElement = Field(default_factory=DegaussableElement)
+    degauss: DegaussableElement | None = Field(default_factory=DegaussableElement)
     """Degaussing attributes of the magnet."""
 
     simulation: MagnetSimulationElement = Field(default_factory=MagnetSimulationElement)
