@@ -46,7 +46,7 @@ We are also happy to help with installation and setting up your accelerator latt
    :maxdepth: 2
    :caption: API
    
-   NALA.models
+   nala.models
 
 Indices and tables
 ==================
