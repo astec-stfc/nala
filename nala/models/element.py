@@ -117,6 +117,9 @@ class baseElement(IgnoreExtra):
         virtual_name (str): The virtual name of the element.
         alias (Aliases): The alias(es) of the element.
         subelement (bool | str): Whether the element is a subelement.
+        electrical: :class:`~nala.models.electrical.ElectricalElement`: The electrical attributes of the element.
+        manufacturer: :class:`~nala.models.manufacturer.Manufacturer`: The manufacturer attributes of the element.
+        controls: :class:`~nala.models.control.ControlsInformation` | None: The control system attributes of the element.
     """
 
     name: str
@@ -143,6 +146,15 @@ class baseElement(IgnoreExtra):
     subelement: bool | str = False
     """Flag to indicate whether the element is a subelement of another 
     (i.e. whether they overlap in physical space)."""
+
+    electrical: ElectricalElement | None = Field(default_factory=ElectricalElement)
+    """Electrical attributes of the element."""
+
+    manufacturer: ManufacturerElement | None = Field(default_factory=ManufacturerElement)
+    """Manufacturer attributes of the element."""
+
+    controls: ControlsInformation | None = None
+    """Control system attributes of the element."""
 
     # Define cascading rules: (source_path, target_path)
     CASCADING_RULES: Dict = {}
@@ -475,7 +487,6 @@ class Element(PhysicalBaseElement):
         electrical: :class:`~nala.models.electrical.ElectricalElement`: The electrical attributes of the element.
         manufacturer: :class:`~nala.models.manufacturer.ManufacturerElement`: The manufacturer attributes of the element.
         simulation: :class:`~nala.models.simulation.SimulationElement`: The simulation attributes of the element.
-        controls: :class:`~nala.models.control.ControlsInformation` | None: The control system attributes of the element.
     """
 
     electrical: ElectricalElement | None = Field(default_factory=ElectricalElement)
@@ -486,9 +497,6 @@ class Element(PhysicalBaseElement):
 
     simulation: SimulationElement = Field(default_factory=SimulationElement)
     """Simulation attributes of the element."""
-
-    controls: ControlsInformation | None = None
-    """Control system attributes of the element."""
 
     def to_CATAP(self):
         catap_dict = super().to_CATAP()
