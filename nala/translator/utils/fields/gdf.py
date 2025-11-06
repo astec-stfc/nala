@@ -10,15 +10,15 @@ from scipy.constants import speed_of_light
 def write_gdf_field_file(self) -> str:
     """
     Generate the field data in a format that is suitable for GPT, based on the
-    :class:`~SimulationFramework.Modules.Fields.field` object provided.
+    :class:`~nala.translator.utils.fields.field` object provided.
     This is then written to a GDF file.
     The `field_type` parameter determines the format of the file.
 
-    A warning is raised if the field type is not supported (perhaps elevate to a `NotImplementedError`?
+    A warning is raised if the field type is not supported (perhaps elevate to a `NotImplementedError`?)
 
     Parameters
     ----------
-    self: :class:`~SimulationFramework.Modules.Fields.field`
+    self: :class:`~nala.translator.utils.fields.field`
         The field object
 
     Returns

@@ -29,6 +29,10 @@ class ApertureElement(IgnoreExtra):
 
 
 class SimulationElement(IgnoreExtra):
+    """
+    Simulation element model.
+    """
+
     field_definition: SerializeAsAny[Any] = None
     """String pointing to field definition"""
 
@@ -43,6 +47,10 @@ class SimulationElement(IgnoreExtra):
 
 
 class MagnetSimulationElement(SimulationElement):
+    """
+    Magnet simulation element model.
+    """
+
     n_kicks: int = 4
     """Number of kicks for tracking through the quad"""
 
@@ -89,6 +97,10 @@ class MagnetSimulationElement(SimulationElement):
 
 
 class DriftSimulationElement(SimulationElement):
+    """
+    Drift simulation element model.
+    """
+
     lsc_interpolate: int = 1
     """Flag to allow for interpolation of computed longitudinal space charge wake.
     See `Elegant manual LSC drift`_
@@ -132,6 +144,10 @@ class DiagnosticSimulationElement(SimulationElement):
 
 
 class PlasmaSimulationElement(SimulationElement):
+    """
+    Plasma simulation element model.
+    """
+
     wakefield_model: Literal["quasistatic_2d"] | None = None
     """Wakefield model (Wake-T); possible values: 
     'blowout', 'custom_blowout', 'focusing_blowout', 'cold_fluid_1d' and 'quasistatic_2d'; if None, no
@@ -206,6 +222,10 @@ class PlasmaSimulationElement(SimulationElement):
 
 
 class RFCavitySimulationElement(SimulationElement):
+    """
+    RF cavity simulation element model.
+    """
+
     field_amplitude: float = 0
     """Cavity field amplitude"""
 
@@ -271,13 +291,31 @@ class RFCavitySimulationElement(SimulationElement):
 
 
 class WakefieldSimulationElement(SimulationElement):
+    """
+    Wakefield simulation element model.
+    """
+
     allow_long_beam: bool = True
+    """Flag to indicate whether beams longer than the wakefield are allowed."""
+
     bunched_beam: bool = False
+    """Flag to indicate whether a bunched beam is to be used."""
+
     change_momentum: bool = True
+    """Flag to indicate whether the wakefield can change the central momentum of the bunch."""
+
     factor: float = 1
-    field_amplitude: float = 0
+    """
+    Wake scaling factor.
+    #TODO check if redundant based on scale_kick?
+    """
+
     interpolate: bool = True
+    """Flag to indicate whether to interpolate points in wake file."""
+
     scale_kick: float = 1
+    """Factor by which to scale wake kicks."""
+
     t_column: str | None = None
     """t column in wake file"""
 
@@ -292,6 +330,7 @@ class WakefieldSimulationElement(SimulationElement):
 
     wz_column: str | None = None
     """Wz column in wake file"""
+
     scale_field_ex: float = 0.0
     """x-component of the longitudinal direction vector."""
 

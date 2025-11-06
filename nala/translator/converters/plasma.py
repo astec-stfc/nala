@@ -9,11 +9,19 @@ from nala.models.laser import LaserElement
 from .laser import LaserTranslator
 
 class PlasmaTranslator(BaseElementTranslator):
+    """
+    Translator class for converting a :class:`~nala.models.element.Plasma` instance into a string or
+    object that can be understood by various simulation codes.
+    """
+
     plasma: PlasmaElement
+    """Plasma element."""
 
     simulation: PlasmaSimulationElement
+    """Plasma simulation element."""
 
     laser: LaserElement | None
+    """Laser element."""
 
     def to_wake_t(self) -> Any:
         """

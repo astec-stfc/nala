@@ -8,6 +8,7 @@ class ShutterElement(IgnoreExtra):
     """Laser info model."""
 
     interlocks: List[str] = Field(alias="shutter_interlock_names", default=[])
+    """Names of shutter interlocks."""
 
     @field_validator("interlocks", mode="before")
     @classmethod
@@ -21,4 +22,4 @@ class ShutterElement(IgnoreExtra):
 
 
 class ValveElement(IgnoreExtra):
-    """Laser info model."""
+    """Valve info model."""

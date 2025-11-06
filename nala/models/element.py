@@ -251,6 +251,22 @@ class baseElement(IgnoreExtra):
     def __getattr__(self, name: str) -> Any:
         """
         Custom getter: Looks for the attribute in nested models.
+
+        For example, if your element has `element.simulation.field_amplitude`, then
+        `getattr(element, "field_amplitude")` will retrieve that nested attribute.
+
+        If there are repeated names for attributes across the models, then an `AttributeError` will be raised.
+        For example, a magnet has `magnet.physical.length` and `magnet.magnetic.length`, so
+        `getattr(magnet, "length")` will not work.
+
+        Args:
+            name (str): Name of the attribute to find.
+
+        Returns:
+            Any: Value of the attribute
+
+        Raises:
+            AttributeError: If `name` matches multiple attributes in the nested models.
         """
         paths = self._resolve_attribute_path(name)
 
@@ -280,6 +296,20 @@ class baseElement(IgnoreExtra):
     def __setattr__(self, name: str, value: Any) -> None:
         """
         Custom setter: Looks for the attribute in nested models and sets the value.
+
+        For example, if your element has `element.simulation.field_amplitude`, then
+        `setattr(element, "field_amplitude", 10)` will set that nested attribute.
+
+        If there are repeated names for attributes across the models, then an `AttributeError` will be raised.
+        For example, a magnet has `magnet.physical.length` and `magnet.magnetic.length`, so
+        `setattr(magnet, "length" 1.0)` will not work.
+
+        Args:
+            name (str): Name of the attribute to find.
+            value (Any): Value of attribute to set.
+
+        Raises:
+            AttributeError: If `name` matches multiple attributes in the nested models.
         """
         # First, allow Pydantic's internal __setattr__ to handle
         # attributes that belong directly to the 'main' model instance (e.g., private vars, dunder methods)
@@ -359,13 +389,39 @@ class baseElement(IgnoreExtra):
         return os.path.join(self.subdirectory, self.name + ".yaml")
 
     @property
-    def hardware_info(self) -> dict:
+    def hardware_info(self) -> Dict[str, str]:
+        """
+        Retrieve the `hardware_class` and `hardware_type` of the object as a dict
+
+        Returns
+        -------
+            Dict[str, str]: {"class": `hardware_class`, "type": `hardware_type`}
+        """
         return {"class": self.hardware_class, "type": self.hardware_type}
 
-    def flat(self):
+    def flat(self) -> Dict[str, Any]:
+        """
+        Dump the entire element model as a flat dictionary, with sub-models separated by "_".
+
+        For example, if an element has `element.electrical.maxI` this will be keyed in the dictionary as
+        `eletrical_maxI: value`
+
+        Returns
+        -------
+            Dict[str, Any]: Flattened dictionary representing the element.
+        """
         return flatten(self.model_dump(), parent_key="", separator="_")
 
     def is_subelement(self) -> bool:
+        """
+        Flag to indicate whether the element is a subelement of another, such as a solenoid surrounding
+        an RF cavity or a BPM embedded inside a magnet. This precludes it from being included when calculating
+        the full length of a beamline.
+
+        Returns
+        -------
+            bool: True if the element is a subelement.
+        """
         if str(self.subelement).lower() == "false":
             return False
         elif str(self.subelement).lower() == "true":
@@ -400,20 +456,27 @@ class PhysicalBaseElement(baseElement):
     def bend_angle(self) -> Rotation:
         """
         Bending angle of the element.
+        #TODO this probably doesn't do what it should.
+
+        Returns
+        -------
+            :class:`~nala.models.physical.Rotation`: The rotation attribute of the element.
         """
         return Rotation.from_list([0, 0, 0])
 
     @property
-    def start_angle(self) -> float:
+    def start_angle(self) -> Rotation:
         """
         Initial global rotation angle of the element.
+        #TODO this probably doesn't do what it should.
         """
         return self.physical.rotation + self.physical.global_rotation
 
     @property
-    def end_angle(self) -> float:
+    def end_angle(self) -> Rotation:
         """
         Final global rotation angle of the element
+        #TODO this probably doesn't do what it should.
         """
         return self.start_angle
 
@@ -533,7 +596,10 @@ class Dipole(Magnet):
     """
 
     hardware_type: str = Field(default="Dipole", frozen=True)
+    """Dipole hardware type."""
+
     magnetic: Dipole_Magnet = Field(default_factory=Dipole_Magnet)
+    """Magnetic attributes of the dipole."""
 
 
 class Quadrupole(Magnet):
@@ -546,7 +612,11 @@ class Quadrupole(Magnet):
     """
 
     hardware_type: str = Field(default="Quadrupole", frozen=True)
+    """Quadrupole hardware type."""
+
     magnetic: Quadrupole_Magnet = Field(default_factory=Quadrupole_Magnet)
+    """Magnetic attributes of the quadrupole."""
+
 
 
 class Sextupole(Magnet):
@@ -559,7 +629,11 @@ class Sextupole(Magnet):
     """
 
     hardware_type: str = Field(default="Sextupole", frozen=True)
+    """Sextupole hardware type."""
+
     magnetic: Sextupole_Magnet = Field(default_factory=Sextupole_Magnet)
+    """Magnetic attributes of the sextupole."""
+
 
 class Octupole(Magnet):
     """
@@ -571,7 +645,11 @@ class Octupole(Magnet):
     """
 
     hardware_type: str = Field(default="Octupole", frozen=True)
+    """Octupole hardware type."""
+
     magnetic: Octupole_Magnet = Field(default_factory=Octupole_Magnet)
+    """Magnetic attributes of the octupole."""
+
 
 class Horizontal_Corrector(Dipole):
     """
@@ -582,6 +660,7 @@ class Horizontal_Corrector(Dipole):
     """
 
     hardware_type: str = Field(default="Horizontal_Corrector", frozen=True)
+    """Horizontal corrector hardware type."""
 
 
 class Vertical_Corrector(Dipole):
@@ -593,6 +672,7 @@ class Vertical_Corrector(Dipole):
     """
 
     hardware_type: str = Field(default="Vertical_Corrector", frozen=True)
+    """Vertical corrector hardware type."""
 
 
 class Combined_Corrector(Dipole):
@@ -606,8 +686,13 @@ class Combined_Corrector(Dipole):
     """
 
     hardware_type: str = Field(default="Combined_Corrector", frozen=True)
+    """Combined corrector hardware type."""
+
     Horizontal_Corrector: str | None = Field(default=None, frozen=True)
+    """Name of horizontal corrector."""
+
     Vertical_Corrector: str | None = Field(default=None, frozen=True)
+    """Name of vertical corrector."""
 
 
 class Solenoid(Magnet):
@@ -620,7 +705,10 @@ class Solenoid(Magnet):
     """
 
     hardware_type: str = Field(default="Solenoid", frozen=True)
+    """Solenoid hardware type."""
+
     magnetic: Solenoid_Magnet = Field(default_factory=Solenoid_Magnet)
+    """Magnetic attributes of the solenoid."""
 
 
 class NonLinearLens(Magnet):
@@ -633,7 +721,10 @@ class NonLinearLens(Magnet):
     """
 
     hardware_type: str = Field(default="NonLinearLens", frozen=True)
+    """Non-linear lens hardware type."""
+
     magnetic: NonLinearLens_Magnet = Field(default_factory=NonLinearLens_Magnet)
+    """Magnetic attributes of the non-linear-lens."""
 
 
 class Wiggler(Magnet):
@@ -647,8 +738,13 @@ class Wiggler(Magnet):
     """
 
     hardware_type: str = Field(default="Undulator", frozen=True)
+    """Wiggler hardware type."""
+
     magnetic: Wiggler_Magnet = Field(default_factory=Wiggler_Magnet)
+    """Magnetic attributes of the wiggler."""
+
     laser: LaserElement | None = None
+    """Laser attached to the wiggler."""
 
 
 class TwissMatch(Magnet):
@@ -663,8 +759,13 @@ class TwissMatch(Magnet):
     """
 
     hardware_type: str = Field(default="TwissMatch", frozen=True)
+    """Twiss match hardware type."""
+
     hardware_class: str = Field(default="TwissMatch", frozen=True)
+    """Twiss match hardware class."""
+
     simulation: TwissMatchSimulationElement = Field(default_factory=TwissMatchSimulationElement)
+    """Simulation attributes of the matching element."""
 
 
 class Diagnostic(Element):
@@ -679,8 +780,13 @@ class Diagnostic(Element):
     """
 
     hardware_type: str = Field(default="Diagnostic", frozen=True)
+    """Diagnostic hardware type."""
+
     hardware_class: str = Field(default="Diagnostic", frozen=True)
+    """Diagnostic hardware class."""
+
     simulation: DiagnosticSimulationElement = Field(default_factory=DiagnosticSimulationElement)
+    """Simulation attributes of the diagnostic."""
 
 
 class Beam_Position_Monitor(Diagnostic):
@@ -695,8 +801,13 @@ class Beam_Position_Monitor(Diagnostic):
     """
 
     hardware_type: str = Field(default="Beam_Position_Monitor", frozen=True, alias="BPM")
+    """BPM hardware type."""
+
     hardware_model: str = Field(default="Stripline", frozen=True)
+    """BPM hardware model."""
+
     diagnostic: Beam_Position_Monitor_Diagnostic = Field(default_factory=Beam_Position_Monitor_Diagnostic)
+    """Diagnostic attributes of the BPM."""
 
 
 class Beam_Arrival_Monitor(Diagnostic):
@@ -711,8 +822,13 @@ class Beam_Arrival_Monitor(Diagnostic):
     """
 
     hardware_type: str = Field(default="Beam_Arrival_Monitor", frozen=True, alias="BAM")
+    """BAM hardware type."""
+
     hardware_model: str = Field(default="DESY", frozen=True)
+    """BAM hardware model."""
+
     diagnostic: Beam_Arrival_Monitor_Diagnostic = Field(default_factory=Beam_Arrival_Monitor_Diagnostic)
+    """Diagnostic attributes of the BAM."""
 
 
 class Bunch_Length_Monitor(Diagnostic):
@@ -727,8 +843,13 @@ class Bunch_Length_Monitor(Diagnostic):
     """
 
     hardware_type: str = Field(default="Bunch_Length_Monitor", frozen=True, alias="BLM")
+    """BLM hardware type."""
+
     hardware_model: str = Field(default="CDR", frozen=True)
+    """BLM hardware model."""
+
     diagnostic: Bunch_Length_Monitor_Diagnostic = Field(default_factory=Bunch_Length_Monitor_Diagnostic)
+    """Diagnostic attributes of the BLM."""
 
 
 class Camera(Diagnostic):
@@ -743,8 +864,13 @@ class Camera(Diagnostic):
     """
 
     hardware_type: str = Field(default="Camera", frozen=True)
+    """Camera hardware type."""
+
     hardware_model: str = Field(default="PCO", frozen=True)
+    """Camera hardware model."""
+
     diagnostic: Camera_Diagnostic = Field(default_factory=Camera_Diagnostic)
+    """Diagnostic attributes of the camera."""
 
 
 class Screen(Diagnostic):
@@ -759,8 +885,13 @@ class Screen(Diagnostic):
     """
 
     hardware_type: str = Field(default="Screen", frozen=True)
+    """Screen hardware type."""
+
     hardware_model: str = Field(default="YAG", frozen=True)
+    """Screen hardware model."""
+
     diagnostic: Screen_Diagnostic = Field(default_factory=Screen_Diagnostic)
+    """Diagnostic attributes of the screen."""
 
     def to_CATAP(self):
         catap_dict = super().to_CATAP()
@@ -786,7 +917,10 @@ class ChargeDiagnostic(Diagnostic):
     """
 
     hardware_type: str = Field(default="ChargeDiagnostic", frozen=True)
+    """Charge diagnostic hardware type."""
+
     diagnostic: Charge_Diagnostic = Field(default_factory=Charge_Diagnostic)
+    """Diagnostic attributes of the charge diagnostic."""
 
 
 class Wall_Current_Monitor(ChargeDiagnostic):
@@ -798,6 +932,7 @@ class Wall_Current_Monitor(ChargeDiagnostic):
     """
 
     hardware_type: str = Field(default="Wall_Current_Monitor", frozen=True, alias="WCM")
+    """WCM hardware type."""
 
 
 class Faraday_Cup_Monitor(ChargeDiagnostic):
@@ -809,6 +944,7 @@ class Faraday_Cup_Monitor(ChargeDiagnostic):
     """
 
     hardware_type: str = Field(default="Faraday_Cup_Monitor", frozen=True, alias="FCM")
+    """FCM hardware type."""
 
 
 class Integrated_Current_Transformer(ChargeDiagnostic):
@@ -820,6 +956,7 @@ class Integrated_Current_Transformer(ChargeDiagnostic):
     """
 
     hardware_type: str = Field(default="Integrated_Current_Transformer", frozen=True, alias="ICT")
+    """ICT hardware type."""
 
 
 class VacuumGauge(Element):
@@ -832,7 +969,10 @@ class VacuumGauge(Element):
     """
 
     hardware_type: str = Field(default="VacuumGauge", frozen=True)
+    """Vacuum gauge hardware type."""
+
     hardware_model: str = Field(default="IMG", frozen=True)
+    """Vacuum gauge hardware model."""
 
 
 class Laser(Element):
@@ -846,8 +986,13 @@ class Laser(Element):
     """
 
     hardware_type: str = Field(default="Laser", frozen=True)
+    """Laser hardware type."""
+
     hardware_model: str = Field(default="Laser", frozen=True)
+    """Laser hardware model."""
+
     laser: LaserElement = Field(default_factory=LaserElement)
+    """Laser attributes of the laser."""
 
 
 class LaserEnergyMeter(Element):
@@ -862,8 +1007,14 @@ class LaserEnergyMeter(Element):
     """
 
     hardware_type: str = Field(default="LaserEnergyMeter", frozen=True)
+    """Laser energy meter hardware type."""
+
     hardware_model: str = Field(default="Gentec Photodiode", frozen=True)
+    """Laser energy meter hardware model.
+    #TODO should be manufacturer?"""
+
     laser: LaserEnergyMeterElement = Field(default_factory=LaserEnergyMeterElement)
+    """Laser energy meter attributes of the element."""
 
 
 class LaserHalfWavePlate(Element):
@@ -878,8 +1029,14 @@ class LaserHalfWavePlate(Element):
     """
 
     hardware_type: str = Field(default="LaserHalfWavePlate", frozen=True)
+    """Laser half-wave plate element type."""
+
     hardware_model: str = Field(default="Newport", frozen=True)
+    """Laser half-wave plate hardware model.
+    #TODO should be manufacturer?"""
+
     laser: LaserHalfWavePlateElement = Field(default_factory=LaserHalfWavePlateElement)
+    """Laser half-wave plate element attributes of the element."""
 
 
 class LaserMirror(Element):
@@ -894,8 +1051,13 @@ class LaserMirror(Element):
     """
 
     hardware_type: str = Field(default="LaserMirror", frozen=True)
+    """Laser mirror hardware type."""
+
     hardware_model: str = Field(default="Planar", frozen=True)
+    """Laser mirror hardware model."""
+
     laser: LaserMirrorElement = Field(default_factory=LaserMirrorElement)
+    """Laser mirror attributes of the element."""
 
 
 class Plasma(Element):
@@ -903,7 +1065,7 @@ class Plasma(Element):
     Plasma element.
 
     Attributes:
-        hardware_type (str): The hardware type of the HWP.
+        hardware_type (str): The hardware type of the element.
         simulation (:class:`~nala.models.simulation.PlasmaSimulationElement`): The simulation
         attributes of the plasma.
         plasma (:class:`~nala.models.plasma.PlasmaElement`): The plasma attributes of the plasma.
@@ -911,33 +1073,76 @@ class Plasma(Element):
     """
 
     hardware_type: str = Field(default="Plasma", frozen=True)
+    """Plasma hardware type."""
+
     simulation: PlasmaSimulationElement = Field(default_factory=PlasmaSimulationElement)
+    """Simulation attributes of the plasma."""
+
     plasma: PlasmaElement = Field(default_factory=PlasmaElement)
+    """Plasma attribute of the plasma."""
+
     laser: LaserElement | None = None
+    """Laser attached to the plasma element."""
 
 
 class Lighting(baseElement):
-    """Lighting element."""
+    """
+    Lighting element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the element.
+        hardware_model (str): The hardware model of the element.
+        lights (:class:`~nala.models.lighting.LightingElement`): The lighting element.
+    """
 
     hardware_type: str = Field(default="Lighting", frozen=True)
+    """Lighting hardware type."""
+
     hardware_model: str = Field(default="LED", frozen=True)
+    """Lighting hardware model."""
+
     lights: LightingElement = Field(default_factory=LightingElement)
+    """Lighting attributes of the element."""
 
 
 class PID(baseElement):
-    """PID element."""
+    """
+    Proportional-integral-derivative feedback element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the element.
+        hardware_model (str): The hardware model of the element.
+        PID (:class:`~nala.models.RF.PIDElement`): The PID element.
+    """
 
     hardware_type: str = Field(default="PID", frozen=True)
+    """PID hardware type."""
+
     hardware_model: str = Field(default="RF", frozen=True)
+    """PID hardware model."""
+
     PID: PIDElement = Field(default_factory=PIDElement)
+    """PID attributes of the element."""
 
 
 class Low_Level_RF(baseElement):
-    """LLRF element."""
+    """
+    Low-level RF element.
+
+    Attributes:
+        hardware_type (str): The hardware type of the element.
+        hardware_model (str): The hardware model of the element.
+        LLRF (:class:`~nala.models.RF.Low_Level_RF_Element`): The LLRF element.
+    """
 
     hardware_type: str = Field(default="Low_Level_RF", frozen=True)
+    """LLRF hardware type."""
+
     hardware_model: str = Field(default="Libera", frozen=True)
+    """LLRF hardware model."""
+
     LLRF: Low_Level_RF_Element = Field(default_factory=Low_Level_RF_Element)
+    """LLRF attributes of the element."""
 
 
 class RFCavity(Element):
@@ -953,9 +1158,16 @@ class RFCavity(Element):
     """
 
     hardware_type: str = Field(default="RFCavity", frozen=True)
+    """RF cavity hardware type."""
+
     hardware_model: str = Field(default="SBand", frozen=True)
+    """RF cavity hardware model."""
+
     cavity: RFCavityElement = Field(default_factory=RFCavityElement)
+    """Cavity attributes of the RF cavity."""
+
     simulation: RFCavitySimulationElement = Field(default_factory=RFCavitySimulationElement)
+    """Simulation attributes of the RF cavity."""
 
 
 class Wakefield(PhysicalBaseElement):
@@ -971,9 +1183,16 @@ class Wakefield(PhysicalBaseElement):
     """
 
     hardware_type: str = Field(default="Wakefield", frozen=True)
+    """Wakefield hardware type."""
+
     hardware_model: str = Field(default="Dielectric", frozen=True)
+    """Wakefield hardware model."""
+
     cavity: WakefieldElement = Field(default_factory=WakefieldElement)
+    """Wakefield attributes of the element."""
+
     simulation: WakefieldSimulationElement = Field(default_factory=WakefieldSimulationElement)
+    """Simulation attributes of the wakefield element."""
 
 
 class RFDeflectingCavity(RFCavity):
@@ -989,9 +1208,16 @@ class RFDeflectingCavity(RFCavity):
     """
 
     hardware_type: str = Field(default="RFDeflectingCavity", frozen=True)
+    """RF deflecting cavity hardware type."""
+
     hardware_model: str = Field(default="SBand", frozen=True)
+    """RF deflecting cavity hardware model."""
+
     cavity: RFDeflectingCavityElement = Field(default_factory=RFDeflectingCavityElement)
+    """Cavity attributes of the RF deflecting cavity."""
+
     simulation: RFCavitySimulationElement = Field(default_factory=RFCavitySimulationElement)
+    """Simulation attributes of the RF deflecting cavity."""
 
 
 class RFModulator(baseElement):
@@ -1005,8 +1231,14 @@ class RFModulator(baseElement):
     """
 
     hardware_type: str = Field(default="RFModulator", frozen=True)
+    """RF modulator hardware type."""
+
     hardware_model: str = Field(default="Thales", frozen=True)
+    """RF modulator hardware model.
+    #TODO move to manufacturer?"""
+
     modulator: RFModulatorElement = Field(default_factory=RFModulatorElement)
+    """RF modulator attributes of the element."""
 
 
 class RFProtection(baseElement):
@@ -1020,8 +1252,13 @@ class RFProtection(baseElement):
     """
 
     hardware_type: str = Field(default="RFProtection", frozen=True)
+    """RF protection hardware type."""
+
     hardware_model: str = Field(default="PROT", frozen=True)
+    """RF protection hardware model."""
+
     modulator: RFProtectionElement = Field(default_factory=RFProtectionElement)
+    """RF protection attributes of the element."""
 
 
 class RFHeartbeat(baseElement):
@@ -1034,7 +1271,10 @@ class RFHeartbeat(baseElement):
     """
 
     hardware_type: str = Field(default="RFHeartbeat", frozen=True)
+    """RF heartbeat hardware type."""
+
     heartbeat: RFHeartbeatElement = Field(default_factory=RFHeartbeatElement)
+    """RF heartbeat system attributes."""
 
 
 class Shutter(Element):
@@ -1047,7 +1287,10 @@ class Shutter(Element):
     """
 
     hardware_type: str = Field(default="Shutter", frozen=True)
+    """Shutter hardware type"""
+
     shutter: ShutterElement = Field(default_factory=ShutterElement)
+    """Shutter attributes of the element."""
 
 
 class Valve(Element):
@@ -1060,7 +1303,10 @@ class Valve(Element):
     """
 
     hardware_type: str = Field(default="Valve", frozen=True)
+    """Valve hardware type."""
+
     valve: ValveElement = Field(default_factory=ValveElement)
+    """Valve attributes of the element."""
 
 
 class Marker(PhysicalBaseElement):
@@ -1075,8 +1321,13 @@ class Marker(PhysicalBaseElement):
     """
 
     hardware_type: str = Field(default="Marker", frozen=True)
+    """Marker hardware type."""
+
     hardware_model: str = Field(default="Simulation", frozen=True)
+    """Marker hardware model."""
+
     simulation: DiagnosticSimulationElement = Field(default_factory=DiagnosticSimulationElement)
+    """Simulation attributes of the marker."""
 
 
 class Aperture(PhysicalBaseElement):
@@ -1086,13 +1337,18 @@ class Aperture(PhysicalBaseElement):
     Attributes:
         hardware_type (str): The hardware type of the aperture.
         hardware_model (str): The hardware model of the aperture.
-        aperture (:class:`~nala.models.simulation.DiagnosticSimulationElement`): The simulation
+        aperture (:class:`~nala.models.simulation.ApertureElement`): The simulation
         attributes of the aperture.
     """
 
     hardware_type: str = Field(default="Aperture", frozen=True)
+    """Aperture hardware type."""
+
     hardware_model: str = Field(default="Simulation", frozen=True)
+    """Aperture hardware model."""
+
     aperture: ApertureElement = Field(default_factory=ApertureElement)
+    """Aperture attributes of the element."""
 
 
 class Collimator(Aperture):
@@ -1105,7 +1361,10 @@ class Collimator(Aperture):
     """
 
     hardware_type: str = Field(default="Collimator", frozen=True)
+    """Collimator hardware type."""
+
     hardware_model: str = Field(default="Simulation", frozen=True)
+    """Collimator hardware model."""
 
 
 class Drift(PhysicalBaseElement):
@@ -1117,5 +1376,9 @@ class Drift(PhysicalBaseElement):
         simulation (:class:`~nala.models.simulation.DriftSimulationElement`): The simulation
         attributes of the drift.
     """
+
     hardware_type: str = Field(default="Drift", frozen=True)
+    """Drift hardware type."""
+
     simulation: DriftSimulationElement = Field(default_factory=DriftSimulationElement)
+    """Simulation attributes of the drift."""

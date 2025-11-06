@@ -16,13 +16,30 @@ def add(x, y):
     return x + y
 
 class MagnetTranslator(BaseElementTranslator):
+    """
+    Base translator class for converting a :class:`~nala.models.element.Magnet` element instance into a string or
+    object that can be understood by various simulation codes.
+
+    Child classes are derived from this for various magnet types.
+    """
+
     magnetic: MagneticElement
+    """Magnetic element class."""
 
     simulation: MagnetSimulationElement
+    """Magnet simulation class."""
 
     @computed_field
     @property
     def k1(self) -> float:
+        """
+        First-order magnetic strength :math:`magnet.KnL(1) \times magnet.magnetic.length \mathrm{[1/m^{2}]}
+
+        Returns
+        -------
+        float:
+            k1
+        """
         try:
             return self.magnetic.KnL(1) / self.magnetic.length
         except ZeroDivisionError:
@@ -32,6 +49,14 @@ class MagnetTranslator(BaseElementTranslator):
     @computed_field
     @property
     def k2(self) -> float:
+        """
+        Second-order magnetic strength :math:`magnet.magnetic.KnL(2) \times magnet.magnetic.length \mathrm{[1/m^{3}]}
+
+        Returns
+        -------
+        float:
+            k2
+        """
         try:
             return self.magnetic.KnL(2) / self.magnetic.length
         except ZeroDivisionError:
@@ -41,6 +66,14 @@ class MagnetTranslator(BaseElementTranslator):
     @computed_field
     @property
     def k3(self) -> float:
+        """
+        Third-order magnetic strength :math:`magnet.magnetic.KnL(3) \times magnet.magnetic.length \mathrm{[1/m^{4}]}
+
+        Returns
+        -------
+        float:
+            k3
+        """
         try:
             return self.magnetic.KnL(3) / self.magnetic.length
         except ZeroDivisionError:
@@ -49,6 +82,14 @@ class MagnetTranslator(BaseElementTranslator):
 
     @property
     def k1l(self) -> float:
+        """
+        First-order normalized magnetic strength :math:`magnet.KnL(1) \mathrm{[1/m]}`
+
+        Returns
+        -------
+        float:
+            k1l
+        """
         return self.magnetic.KnL(1)
 
     @k1l.setter
@@ -57,6 +98,14 @@ class MagnetTranslator(BaseElementTranslator):
 
     @property
     def k2l(self) -> float:
+        """
+        Second-order normalized magnetic strength :math:`magnet.KnL(2) \mathrm{[1/m^{2}]}`
+
+        Returns
+        -------
+        float:
+            k2l
+        """
         return self.magnetic.KnL(2)
 
     @k2l.setter
@@ -65,31 +114,75 @@ class MagnetTranslator(BaseElementTranslator):
 
     @property
     def k3l(self) -> float:
+        """
+        Third-order normalized magnetic strength :math:`magnet.KnL(3) \mathrm{[1/m^{3}]}`
+
+        Returns
+        -------
+        float:
+            k3l
+        """
         return self.magnetic.KnL(3)
 
     @k3l.setter
     def k3l(self, value: float) -> None:
         setattr(getattr(self.magnetic.multipoles, "K3L"), "normal", value)
 
-    # TODO relate these to systematic_ and random_multipoles
     @computed_field
     @property
     def dk1(self) -> float:
+        """
+        Error in first-order magnetic strength
+        :math:`magnet.dKnL(1) \times magnet.magnetic.length \mathrm{[1/m^{2}]}
+
+        Currently returns zero...
+        # TODO relate these to systematic_ and random_multipoles
+
+        Returns
+        -------
+        float:
+            dk1
+        """
         return 0.0
 
     @computed_field
     @property
     def dk2(self) -> float:
+        """
+        Error in second-order magnetic strength
+        :math:`magnet.dKnL(2) \times magnet.magnetic.length \mathrm{[1/m^{3}]}
+
+        Currently returns zero...
+        # TODO relate these to systematic_ and random_multipoles
+
+        Returns
+        -------
+        float:
+            dk2
+        """
         return 0.0
 
     @computed_field
     @property
     def dk3(self) -> float:
+        """
+        Error in third-order magnetic strength
+        :math:`magnet.dKnL(3) \times magnet.magnetic.length \mathrm{[1/m^{4}]}
+
+        Currently returns zero...
+        # TODO relate these to systematic_ and random_multipoles
+
+        Returns
+        -------
+        float:
+            dk3
+        """
         return 0.0
 
     def to_astra(self, n: int = 0, **kwargs: dict) -> str:
         """
-        Writes the quadrupole element string for ASTRA.
+        Writes the quadrupole element string for ASTRA;
+        calls :func:`~_write_ASTRA_quadrupole`.
 
         Note that in astra `Q_xrot` means a rotation about the y-axis and vice versa.
 
@@ -112,12 +205,13 @@ class MagnetTranslator(BaseElementTranslator):
 
     def to_csrtrack(self, n: int = 0) -> str:
         """
-        Writes the quadrupole element string for CSRTrack.
+        Writes the quadrupole element string for CSRTrack;
+        calls :func:`_write_CSRTrack_quadrupole`.
 
         Parameters
         ----------
         n: int
-            Marker index
+            Quad index
 
         Returns
         -------
@@ -132,6 +226,19 @@ class MagnetTranslator(BaseElementTranslator):
             return ""
 
     def _write_ASTRA_quadrupole(self, n: int = 0, **kwargs: dict) -> str:
+        """
+        Writes the quadrupole element string for ASTRA.
+
+        Parameters
+        ----------
+        n: int
+            Quad index
+
+        Returns
+        -------
+        str
+            String representation of the element for ASTRA
+        """
         field_ref_pos = self.get_field_reference_position()
         astradict = dict(
             [
@@ -218,7 +325,7 @@ class MagnetTranslator(BaseElementTranslator):
         Parameters
         ----------
         n: int
-            Modulator index
+            Screen index
 
         Returns
         -------
@@ -241,6 +348,23 @@ class MagnetTranslator(BaseElementTranslator):
         )
 
     def to_gpt(self, Brho: float = 0, ccs: str="wcs", *args, **kwargs) -> str:
+        """
+        Write a string representation of the magnet for GPT
+
+        #TODO correctors not currently implemented; need to make these `rectmagnet` and not change ccs
+
+        Parameters
+        ----------
+        Brho: float
+            Magnetic rigidity.
+        ccs: str
+            Name of co-ordinate system of the magnet.
+
+        Returns
+        -------
+        str
+            String representation of the magnet for GPT.
+        """
         self.start_write()
         if "corrector" in self.hardware_type.lower():
             return ""
@@ -268,18 +392,41 @@ class MagnetTranslator(BaseElementTranslator):
 
 
 class DipoleTranslator(BaseElementTranslator):
+    """
+    Translator class for converting a :class:`~nala.models.element.Dipole` element instance into a string or
+    object that can be understood by various simulation codes.
+    """
+
     magnetic: Dipole_Magnet
+    """Dipole element class."""
 
     simulation: MagnetSimulationElement
+    """Magnet simulation class."""
 
     @computed_field
     @property
     def angle(self) -> float:
+        """
+        Bending angle of the dipole.
+
+        Returns
+        -------
+        float:
+            `element.magnetic.KnL(0)`
+        """
         return self.magnetic.KnL(0)
 
     @computed_field
     @property
     def k1(self) -> float:
+        """
+        First-order magnetic strength `element.KnL(1) / element.magnetic.length`
+
+        Returns
+        -------
+        float
+            Dipole k1
+        """
         try:
             return self.magnetic.KnL(1) / self.magnetic.length
         except ZeroDivisionError:
@@ -289,6 +436,14 @@ class DipoleTranslator(BaseElementTranslator):
     @computed_field
     @property
     def k2(self) -> float:
+        """
+        Second-order magnetic strength `element.KnL(1) / element.magnetic.length`
+
+        Returns
+        -------
+        float
+            Dipole k2
+        """
         try:
             return self.magnetic.KnL(2) / self.magnetic.length
         except ZeroDivisionError:
@@ -298,6 +453,14 @@ class DipoleTranslator(BaseElementTranslator):
     @computed_field
     @property
     def k3(self) -> float:
+        """
+        Third-order magnetic strength `element.KnL(1) / element.magnetic.length`
+
+        Returns
+        -------
+        float
+            Dipole k3
+        """
         try:
             return self.magnetic.KnL(3) / self.magnetic.length
         except ZeroDivisionError:
@@ -306,6 +469,14 @@ class DipoleTranslator(BaseElementTranslator):
 
     @property
     def k1l(self) -> float:
+        """
+        First-order normalized magnetic strength `element.KnL(1)`
+
+        Returns
+        -------
+        float
+            Dipole k1l
+        """
         return self.magnetic.KnL(1)
 
     @k1l.setter
@@ -314,6 +485,14 @@ class DipoleTranslator(BaseElementTranslator):
 
     @property
     def k2l(self) -> float:
+        """
+        Second-order normalized magnetic strength `element.KnL(2)`
+
+        Returns
+        -------
+        float
+            Dipole k2l
+        """
         return self.magnetic.KnL(2)
 
     @k2l.setter
@@ -322,6 +501,14 @@ class DipoleTranslator(BaseElementTranslator):
 
     @property
     def k3l(self) -> float:
+        """
+        Third-order normalized magnetic strength `element.KnL(3)`
+
+        Returns
+        -------
+        float
+            Dipole k3l
+        """
         return self.magnetic.KnL(3)
 
     @k3l.setter
@@ -346,7 +533,8 @@ class DipoleTranslator(BaseElementTranslator):
 
     def to_astra(self, n: int = 0, **kwargs: dict) -> str:
         """
-        Writes the quadrupole element string for ASTRA.
+        Writes the dipole element string for ASTRA;
+        calls :func:`~_write_ASTRA_dipole`.
 
         Note that in astra `Q_xrot` means a rotation about the y-axis and vice versa.
 
@@ -358,7 +546,7 @@ class DipoleTranslator(BaseElementTranslator):
         Returns
         -------
         str or None
-            String representation of the element for ASTRA, or None if quadrupole strength is zero
+            String representation of the element for ASTRA, or None if dipole strength is zero
         """
         self.start_write()
         return self._write_ASTRA_dipole(n, **kwargs)
@@ -472,6 +660,9 @@ class DipoleTranslator(BaseElementTranslator):
         """
         Get the dipole entrance edge angle.
 
+        If `magnet.magnetic.entrance_edge_angle` is a string, it can only be understood if it is
+        in terms of `angle`, i.e. 'angle' or 'angle/2'.
+
         Returns
         -------
         float
@@ -489,6 +680,9 @@ class DipoleTranslator(BaseElementTranslator):
     def e2(self) -> float:
         """
         Get the dipole exit edge angle.
+
+        If `magnet.magnetic.entrance_edge_angle` is a string, it can only be understood if it is
+        in terms of `angle`, i.e. 'angle' or 'angle/2'.
 
         Returns
         -------
@@ -541,6 +735,21 @@ class DipoleTranslator(BaseElementTranslator):
         )
 
     def to_gpt(self, Brho: float = 0.0, ccs: str = "wcs", *args, **kwargs) -> str:
+        """
+        Write a string representation of the magnet for GPT
+
+        Parameters
+        ----------
+        Brho: float
+            Magnetic rigidity.
+        ccs: str
+            Name of co-ordinate system of the magnet.
+
+        Returns
+        -------
+        str
+            String representation of the magnet for GPT.
+        """
         self.start_write()
         field = 1.0 * self.magnetic.angle * Brho / self.magnetic.length
         if abs(field) > 0 and abs(self.rho) < 100:
@@ -598,6 +807,21 @@ class DipoleTranslator(BaseElementTranslator):
         return output
 
     def new_ccs(self, ccs: gpt_ccs) -> gpt_ccs:
+        """
+        Create a new GPT co-ordinate system based on the angle of the magnet.
+
+        # TODO we set intersect=0 for new CCS -- is this accurate?
+
+        Parameters
+        ----------
+        ccs: :class:`~nala.translator.converters.codes.gpt.gpt_ccs`
+            GPT co-ordinate system
+
+        Returns
+        -------
+        :class:`~nala.translator.converters.codes.gpt.gpt_ccs`
+            New GPT co-ordinate system.
+        """
         if abs(self.magnetic.angle) > 0 and abs(self.magnetic.rho) < 100:
             # print('Creating new CCS')
             number = (
@@ -688,9 +912,16 @@ class DipoleTranslator(BaseElementTranslator):
 
 
 class SolenoidTranslator(BaseElementTranslator):
+    """
+    Translator class for converting a :class:`~nala.models.element.Solenoid` element instance into a string or
+    object that can be understood by various simulation codes.
+    """
+
     magnetic: Solenoid_Magnet
+    """Solenoid element class."""
 
     simulation: MagnetSimulationElement
+    """Magnet simulation class."""
 
     @computed_field
     @property
@@ -759,6 +990,24 @@ class SolenoidTranslator(BaseElementTranslator):
         )
 
     def to_gpt(self, Brho: float = 0.0, ccs: str = "wcs", *args, **kwargs) -> str:
+        """
+        Write a string representation of the solenoid for GPT. Note that only solenoids with
+        field maps are currently supported.
+
+        # TODO include solenoids w/o field maps.
+
+        Parameters
+        ----------
+        Brho: float
+            Magnetic rigidity.
+        ccs: str
+            Name of co-ordinate system of the magnet.
+
+        Returns
+        -------
+        str
+            String representation of the magnet for GPT.
+        """
         self.start_write()
         field_ref_pos = self.get_field_reference_position()
         field_file_name = self.generate_field_file_name(
@@ -864,9 +1113,16 @@ class SolenoidTranslator(BaseElementTranslator):
 
 
 class WigglerTranslator(BaseElementTranslator):
+    """
+    Translator class for converting a :class:`~nala.models.element.Wiggler` element instance into a string or
+    object that can be understood by various simulation codes.
+    """
+
     magnetic: Wiggler_Magnet
+    """Wiggler magnetic element."""
 
     simulation: MagnetSimulationElement
+    """Wiggler simulation element."""
 
     def to_genesis(self) -> str:
         """
@@ -904,4 +1160,10 @@ class WigglerTranslator(BaseElementTranslator):
         return wholestring
 
 class NonLinearLensTranslator(BaseElementTranslator):
+    """
+    Translator class for converting a :class:`~nala.models.element.NonLinearLens` element instance into a string or
+    object that can be understood by various simulation codes.
+    """
+
     magnetic: NonLinearLens_Magnet
+    """NLL magnetic element."""

@@ -345,7 +345,10 @@ class MagneticElement(IgnoreExtra):
     """Linear saturation fit coefficients."""
 
     settle_time: float | None = None # Field(alias="mag_set_max_wait_time", default=45.0)
-    """Maximum time to wait for the magnet current to settle [s]."""
+    """
+    Maximum time to wait for the magnet current to settle [s].
+    #TODO move to electrical?
+    """
 
     entrance_edge_angle: float | str = Field(default=0.0)
     """Entrance edge angle in degrees; can be "angle" which uses the bend angle."""
@@ -614,16 +617,35 @@ class SolenoidFields(solenoidFieldsData):
 
 
 class Solenoid_Magnet(IgnoreExtra):
-    """Solenoid magnet higher order fields."""
+    """
+    Solenoid magnet including higher order fields.
+    """
 
     length: NonNegativeFloat = Field(default=0.0, alias="magnetic_length")
+    """Magnetic length [m]."""
+
     order: int = Field(repr=False, default=0, frozen=True)
+    """Solenoid multipole order."""
+
     fields: SolenoidFields = SolenoidFields()
+    """Solenoid fields."""
+
     systematic_fields: SolenoidFields = SolenoidFields()
+    """Systematic solenoid fields."""
+
     random_fields: SolenoidFields = SolenoidFields()
+    """Random solenoid fields."""
+
     field_integral_coefficients: FieldIntegral = FieldIntegral()
+    """Field integral coefficients."""
+
     linear_saturation_coefficients: LinearSaturationFit = LinearSaturationFit()
+    """Linear saturation coefficients."""
+
     settle_time: float = Field(alias="mag_set_max_wait_time", default=45.0)
+    """Time for solenoid to settle.
+    #TODO move to electrical?
+    """
 
     def __init__(self, /, **data: Any) -> None:
         super().__init__(**data)
@@ -669,29 +691,62 @@ class Solenoid_Magnet(IgnoreExtra):
 
 
 class NonLinearLens_Magnet(IgnoreExtra):
-    """Non-linear lens magnet."""
+    """
+    Non-linear lens magnet. See `MAD-X manual`_ and `PAC2011 article`_
+
+    .. _MAD-X manual: https://cern.ch/madx
+    .. _PAC2011 article: https://proceedings.jacow.org/PAC2011/papers/wep070.pdf
+    """
 
     length: NonNegativeFloat = Field(default=0.0, alias="magnetic_length")
+    """Magnetic length of NLL [m]."""
+
     integrated_strength: NonNegativeFloat = Field(default=0.0, alias="knll")
+    """Integrated strength of NLL."""
+
     dimensional_parameter: float = Field(default=0.0, alias="cnll")
+    """Dimensional parameter of NLL."""
 
     def __init__(self, /, **data: Any) -> None:
         super().__init__(**data)
 
 
 class Wiggler_Magnet(IgnoreExtra):
-    """Undulator magnet."""
+    """
+    Undulator magnet.
+    """
 
     length: NonNegativeFloat = Field(default=0.0, alias="magnetic_length")
+    """Magnetic length of wiggler [m].
+    #TODO validate / check that length == period*num_periods.
+    """
+
     strength: NonNegativeFloat = Field(default=0.0, alias="K")
+    """Wiggler strength (K) parameter."""
+
     peak_magnetic_field: float = Field(default=0.0, alias="B")
+    """Peak wiggler magnetic field [B]."""
+
     period: NonNegativeFloat = Field(default=0.0, alias="lambdau")
+    """Wiggler period [m]."""
+
     num_periods: NonNegativeInt = Field(default=0, alias="nwig")
+    """Number of periods in the wiggler [m]."""
+
     helical: bool = False
+    """Flag to indicate if the wiggler is helical; False implies planar."""
+
     quadratic_roll_off_x: float = Field(default=0.0, alias="kx")
+    """Horizontal quadratic roll-off parameter."""
+
     quadratic_roll_off_y: float = Field(default=0.0, alias="ky")
+    """Vertical quadratic roll-off parameter."""
+
     transverse_gradient_x: float = Field(default=0.0, alias="gradx")
+    """Horizontal transverse gradient."""
+
     transverse_gradient_y: float = Field(default=0.0, alias="grady")
+    """Vertical transverse gradient."""
 
     def __init__(self, /, **data: Any) -> None:
         super().__init__(**data)
@@ -699,6 +754,15 @@ class Wiggler_Magnet(IgnoreExtra):
 
     @property
     def normalized_strength(self) -> float:
+        """
+        Getter for the normalised undulator strength :math:`\a_w`
+
+        Returns
+        -------
+        float:
+            :attr:`~strength` / :math:`\sqrt{2}`
+        """
+
         if not self.helical:
             return self.strength / np.sqrt(2)
         else:
@@ -706,6 +770,14 @@ class Wiggler_Magnet(IgnoreExtra):
 
     @normalized_strength.setter
     def normalized_strength(self, aw: float) -> None:
+        """
+        Setter for the normalised undulator strength :math:`\a_w`
+
+        Parameters
+        ----------
+        aw: float
+            :attr:`~strength` = :math:`\a_w \times \sqrt{2}`
+        """
         if not self.helical:
             self.strength = aw * np.sqrt(2)
         else:
@@ -713,6 +785,14 @@ class Wiggler_Magnet(IgnoreExtra):
 
     @property
     def poles(self) -> int:
+        """
+        Number of poles, twice :attr:`~num_periods`.
+
+        Returns
+        -------
+        int
+            Number of poles
+        """
         return int(self.num_periods * 2)
 
     @poles.setter

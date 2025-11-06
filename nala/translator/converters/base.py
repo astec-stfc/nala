@@ -4,7 +4,7 @@ from pydantic import computed_field, Field
 
 from nala.models.physical import PhysicalElement, Position  # noqa E402
 from nala.models.element import flatten, Element
-from typing import Dict
+from typing import Dict, Any
 from warnings import warn
 
 from ..converters import (
@@ -29,6 +29,11 @@ from ..converters.codes.gpt import gpt_ccs
 
 
 class BaseElementTranslator(Element):
+    """
+    Translator class for converting a :class:`~nala.models.element.Element` instance into a string or
+    object that can be understood by various simulation codes.
+    """
+
     type_conversion_rules: Dict = {}
     """Conversion rules for keywords when exporting to different code formats."""
 
@@ -36,12 +41,19 @@ class BaseElementTranslator(Element):
     """Conversion rules for keywords when exporting to different code formats."""
 
     counter: int = Field(ge=1, default=1)
+    """
+    Counter to indicate the number of elements of this type in the lattice/section.
+    #TODO was needed for ASTRA/CSRTrack; may be deprecated.
+    """
 
     master_lattice_location: str = None
+    """Location of the directory containing lattice/data/simulation files."""
 
     directory: str = './'
+    """Directory to which lattice/element files will be written."""
 
     ccs: gpt_ccs = None
+    """Co-ordinate system for GPT elements."""
 
     def model_post_init(self, __context):
         self.type_conversion_rules = type_conversion_rules
@@ -76,10 +88,22 @@ class BaseElementTranslator(Element):
         self.ccs = gpt_ccs(name="wcs", position=[0, 0, 0], rotation=[0, 0, 0])
         super().model_post_init(__context)
 
-    def full_dump(self) -> Dict:
+    def full_dump(self) -> Dict[str, Any]:
+        """
+        Dump the full lattice model as a single-layer dictionary. For attributes within nested models,
+        keys will be separated by "_".
+
+        Returns
+        -------
+        Dict[str, Any]
+            A flattened dictionary containing the attributes of the element.
+        """
         return flatten({**self.model_dump()}, parent_key="", separator="_")
 
     def start_write(self) -> None:
+        """
+        Begin the element writing process; calls :func:`~update_field_definition`.
+        """
         self.update_field_definition()
 
     def to_elegant(self) -> str:
@@ -307,15 +331,38 @@ class BaseElementTranslator(Element):
         return wholestring
 
     def to_csrtrack(self, n: int = 0, **kwargs) -> str:
+        """
+        Base function for writing to CSRTrack; this is empty since only certain elements are supported.
+
+        #TODO add warnings
+        """
         return ""
 
     def to_astra(self, n: int = 0, **kwargs: dict) -> str:
+        """
+        Base function for writing to ASTRA; this is empty since only certain elements are supported.
+
+        #TODO add warnings
+        """
         return ""
 
     def to_gpt(self, Brho: float=0.0, ccs: str = "wcs", *args, **kwargs) -> str:
+        """
+        Base function for writing to GPT; this is empty since only certain elements are supported.
+
+        #TODO add warnings
+        """
         return ""
 
     def to_wake_t(self) -> object:
+        """
+        Generates a Wake-T object based on the element's properties and type.
+
+        Returns
+        -------
+        object
+            Wake-T object
+        """
         from ..conversion_rules.codes import wake_t_conversion
 
         type_conversion_rules_Wake_T = wake_t_conversion.wake_t_conversion_rules
@@ -909,19 +956,19 @@ class BaseElementTranslator(Element):
             )
         else:
             warn(
-                f"param does not have a filename: {param}, it must be a `field` object"
+                f"param associated with {self.name} does not have a filename: {param}, it must be a `field` object"
             )
         return None
 
     @property
     def get_field_amplitude(self) -> float:
         """
-        Returns the field amplitude of the element, scaled by `field_scale` if it exists.
+        Returns the field amplitude of the element, scaled by `scale_field` if it exists.
 
         Returns
         -------
         float or None
-            The field amplitude of the element, which is either scaled by `field_scale`
+            The field amplitude of the element, which is either scaled by `scale_field`
             or directly taken from `field_amplitude`.
             Returns None if `field_amplitude` is not defined
 
@@ -930,7 +977,7 @@ class BaseElementTranslator(Element):
             if hasattr(self.magnetic, "fields"):
                 if hasattr(self.magnetic.fields, "S0L"):
                     if type(self.simulation.scale_field) in [int, float]:
-                        return float(self.field_scale) * float(
+                        return float(self.scale_field) * float(
                             expand_substitution(self, self.magnetic.fields.S0L)
                         )
                     else:

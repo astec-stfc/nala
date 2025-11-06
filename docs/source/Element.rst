@@ -43,6 +43,32 @@ Objects that control lighting, low-level RF modules, RF modulators, or feedback 
 elements that derive from :py:class:`baseElement <nala.models.element.baseElement>`
 but do not have a physical position defined.
 
+**Example:** Creating a basic element without physical position:
+
+.. code-block:: python
+
+    from nala.models.element import baseElement
+
+    # RF modulator - no physical position needed
+    modulator = baseElement(
+        name="MOD-KLYS-01",
+        hardware_class="RF",
+        hardware_type="Modulator",
+        hardware_model="ScandiNova-K100",
+        machine_area="KLYSTRON_GALLERY",
+        virtual_name="MOD:KLYS:01",
+        alias=["mod1", "klystron_mod_1"]
+    )
+
+    # BPM embedded in a quadrupole (subelement)
+    embedded_bpm = baseElement(
+        name="BPM-QUAD-01",
+        hardware_class="Diagnostic",
+        hardware_type="BPM",
+        machine_area="LINAC-1",
+        subelement=True
+    )
+
 .. _physical-element:
 
 Physical element
@@ -63,6 +89,33 @@ The full specification of an element position therefore consists of:
 * ``error: ElementError(position=Position(x, y, z), rotation=Rotation(phi, psi, theta))`` -- see :py:class:`ElementError <nala.models.physical.ElementError>`; the reference position for an error is the middle of the element.
 * ``survey: ElementSurvey(position=Position(x, y, z), rotation=Rotation(phi, psi, theta))`` -- see :py:class:`ElementSurvey <nala.models.physical.ElementSurvey>`.
 
+**Example:** Creating elements with physical properties:
+
+.. code-block:: python
+
+    from nala.models.element import PhysicalBaseElement
+    from nala.models.physical import PhysicalElement, Position, Rotation, ElementError
+
+    # Quadrupole with position and alignment error
+    quad = PhysicalBaseElement(
+        name="QUAD-02",
+        hardware_class="Magnet",
+        hardware_type="Quadrupole",
+        machine_area="LINAC-1",
+        physical=PhysicalElement(
+            length=0.5,
+            middle=Position(x=0, y=0, z=10.0),
+            error=ElementError(
+                position=Position(x=0.0001, y=-0.0002, z=0),  # 0.1mm X, -0.2mm Y offset
+                rotation=Rotation(phi=0, psi=0, theta=0.001)  # 1 mrad roll
+            )
+        )
+    )
+
+    # Access computed positions
+    print(f"Quad start: {quad.physical.start.z}")  # 9.75
+    print(f"Quad end: {quad.physical.end.z}")      # 10.25
+
 .. _element-class:
 
 Element
@@ -74,5 +127,171 @@ which defines the following additional properties (described in more detail in :
 
 * ``simulation: SimulationElement`` -- see :ref:`simulation-element`.
 * ``controls: ControlsInformation`` -- see :ref:`controls-information`.
-* ``manufacturer: ManufacturerElement`` -- :ref:`electrical-and-manufacturer`.
+* ``manufacturer: ManufacturerElement`` -- see :ref:`electrical-and-manufacturer`.
 * ``electrical: ElectricalElement`` -- see :ref:`electrical-and-manufacturer`.
+
+**Example:** Complete element definition with all properties:
+
+.. code-block:: python
+
+    from nala.models.element import Quadrupole
+    from nala.models.magnetic import Quadrupole_Magnet
+    from nala.models.simulation import MagnetSimulationElement
+    from nala.models.control import ControlsInformation, ControlVariable
+
+    # Full quadrupole definition
+    quad = Quadrupole(
+        name="QUAD-MATCH-01",
+        machine_area="MATCHING",
+        physical={
+            "length": 0.3,
+            "middle": [0, 0, 15.0],
+        },
+        magnetic=Quadrupole_Magnet(
+            k1l=5.2,  # Normalized gradient
+            length=0.31 # Magnetic length
+        ),
+        electrical={
+            "maxI": 250.0,
+            "minI": 0.0,
+            "read_tolerance": 0.01
+        },
+        manufacturer={
+            "manufacturer": "Sigma Phi",
+            "model": "QF-250",
+            "serial_number": "2023-001"
+        },
+        simulation=MagnetSimulationElement(
+            n_kicks=10,
+        ),
+        controls=ControlsInformation(
+            variables={
+                "READ": ControlVariable(
+                    identifier="QUAD:MATCH:01:BACT",
+                    dtype=float,
+                    protocol="CA", # EPICS channel access
+                    units="A",
+                    description="Quadrupole read current",
+                    read_only=True
+                )
+            }
+        )
+    )
+
+    # Direct attribute access across nested models
+    print(quad.k1l)            # 5.2 (finds magnetic.k1)
+
+For more examples of creating elements and combining them into lattices, see :ref:`examples`.
+Elements can be organized into :ref:`section-lattice` and :ref:`machine-layout` structures as
+described in :ref:`lattice`. Once defined, elements can be exported to simulation codes using
+the :ref:`translator` module.
+
+**Alternative:** Element definition using dictionaries:
+
+.. code-block:: python
+
+    from nala.models.element import Quadrupole
+
+    # Same quadrupole using dictionary notation
+    # NALA automatically converts dictionaries to appropriate class instances
+    from nala.models.element import Quadrupole
+
+    # Same quadrupole using dictionary notation
+    # NALA automatically converts dictionaries to appropriate class instances
+    quad = Quadrupole(
+        name="QUAD-MATCH-01",
+        machine_area="MATCHING",
+        physical={
+            "length": 0.3,
+            "middle": [0, 0, 15.0],
+            "error": {
+                "position": [0.0001, -0.0002, 0],
+                "rotation": [0, 0, 0.001],
+            }
+        },
+        magnetic={
+            "k1l": 5.2,
+            "length": 0.31,
+        },
+        electrical={
+            "maxI": 250.0,
+            "minI": 0.0,
+            "read_tolerance": 0.01,
+        },
+        manufacturer={
+            "manufacturer": "Sigma Phi",
+            "model": "QF-250",
+            "serial_number": "2023-001",
+            "manufacture_date": "2023-06-15"
+        },
+        simulation={
+            "field_amplitude": 5.2,
+            "slice_method": "DRIFT_KICK_DRIFT",
+            "n_slices": 10,
+            "field_reference_position": "middle"
+        },
+        controls={
+            "variables": {
+                "READ": {
+                    "identifier": "QUAD:MATCH:01:BACT",
+                    "dtype": float,
+                    "protocol": "CA", # EPICS channel access
+                    "units": "A",
+                    "description": "Quadrupole read current",
+                    "read_only": True
+                }
+            }
+        },
+        degauss={
+            "tolerance": 0.1,
+            "steps": 10,
+            "values": [100, -100, 80, -80, 60, -60, 40, -40, 20, -20]
+        }
+    )
+
+    # Dictionary notation works for partial definitions too
+    from nala.models.element import RFCavity
+
+    cavity = RFCavity(
+        name="CAV-L1-01",
+        hardware_class="RFCavity",
+        machine_area="LINAC-1",
+        physical={
+            "length": 1.0,
+            "middle": [0, 0, 25.0],
+        },
+        cavity={
+            "frequency": 2.856e9,
+            "q0": 10000,
+            "r_over_q": 100,
+            "cavity_type": "StandingWave"
+        },
+        simulation={
+            "field_amplitude": 25e6,  # 25 MV/m
+            "phase": 0.0,
+            "field_definition": {
+                "filename": "cavity_field.hdf5",
+                "field_type": "1DElectroDynamic",
+                "frequency": 2.856e9
+            }
+        }
+    )
+
+    # Mixed notation also works
+    from nala.models.element import Element
+    from nala.models.physical import Position
+
+    screen = Element(
+        name="SCREEN-01",
+        hardware_class="Diagnostic",
+        hardware_type="Screen",
+        machine_area="INJECTOR",
+        physical={
+            "length": 0.01,
+            "middle": Position(x=0, y=0, z=5.0),  # Mix class instance
+        }
+    )
+
+This flexibility allows for easy element creation from configuration files (YAML/JSON) or programmatic
+generation. See :ref:`examples` for more patterns of element creation and :ref:`lattice` for combining
+elements into larger structures.
