@@ -651,7 +651,7 @@ class Wiggler(Magnet):
     laser: LaserElement | None = None
 
 
-class TwissMatch(Magnet):
+class TwissMatch(Element):
     """
     Twiss matching element. Used for changing the Twiss parameters of the beam.
 
