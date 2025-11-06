@@ -487,7 +487,7 @@ class Element(PhysicalBaseElement):
 
     Attributes:
         electrical: :class:`~nala.models.electrical.ElectricalElement`: The electrical attributes of the element.
-        manufacturer: :class:`~nala.models.manufacturer.Manufacturer`: The manufacturer attributes of the element.
+        manufacturer: :class:`~nala.models.manufacturer.ManufacturerElement`: The manufacturer attributes of the element.
         simulation: :class:`~nala.models.simulation.SimulationElement`: The simulation attributes of the element.
         controls: :class:`~nala.models.control.ControlsInformation` | None: The control system attributes of the element.
     """

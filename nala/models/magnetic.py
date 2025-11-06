@@ -70,19 +70,19 @@ class Multipoles(MultipolesData):
         else:
             raise ValueError("Multipole should be a dict or a list of floats")
 
-    def __str__(self):
-        return " ".join(
-            [
-                "K"
-                + str(i)
-                + "L=Multipole("
-                + getattr(self, "K" + str(i) + "L").__str__()
-                + ")"
-                for i in range(0, 13)
-                if abs(getattr(self, "K" + str(i) + "L").normal) > 0
-                or abs(getattr(self, "K" + str(i) + "L").skew) > 0
-            ]
-        )
+    # def __str__(self):
+    #     return " ".join(
+    #         [
+    #             "K"
+    #             + str(i)
+    #             + "L=Multipole("
+    #             + getattr(self, "K" + str(i) + "L").__str__()
+    #             + ")"
+    #             for i in range(0, 13)
+    #             if abs(getattr(self, "K" + str(i) + "L").normal) > 0
+    #             or abs(getattr(self, "K" + str(i) + "L").skew) > 0
+    #         ]
+    #     )
 
     def __repr__(self):
         return "Multipoles(" + self.__str__() + ")"
@@ -585,14 +585,14 @@ solenoidFieldsData = create_model("solenoidFieldsData", **solenoidFields)
 class SolenoidFields(solenoidFieldsData):
     """Magnetic multipoles model."""
 
-    def __str__(self):
-        return " ".join(
-            [
-                "S" + str(i) + "L=" + getattr(self, "S" + str(i) + "L").__str__() + ""
-                for i in range(13)
-                if abs(getattr(self, "S" + str(i) + "L")) > 0
-            ]
-        )
+    # def __str__(self):
+    #     return " ".join(
+    #         [
+    #             "S" + str(i) + "L=" + getattr(self, "S" + str(i) + "L").__str__() + ""
+    #             for i in range(13)
+    #             if abs(getattr(self, "S" + str(i) + "L")) > 0
+    #         ]
+    #     )
 
     def __repr__(self):
         return "SolenoidFields(" + self.__str__() + ")"

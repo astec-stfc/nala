@@ -10,6 +10,13 @@ larger structures: sections, layouts, and the complete machine model.
 These classes work together to define the full accelerator lattice, from individual elements up to complete
 beam paths through the machine.
 
+These classes are outlined below; refer to :numref:`fig-lattice-structure` for an inheritance diagram.
+
+.. _fig-lattice-structure:
+.. figure:: assets/nala-lattice-structure.png
+
+   Class structure of :mod:`NALA` sections, lattices and machines.
+
 .. _section-lattice:
 
 Section Lattice
@@ -35,7 +42,9 @@ Key methods and properties include:
 Example usage:
 
 .. code-block:: python
-
+    
+    from nala.models.elementList import SectionLattice
+    
     section = SectionLattice(
         name="injector",
         order=["gun", "solenoid1", "buncher"],
@@ -69,6 +78,8 @@ The layout automatically handles element ordering and can filter elements by var
 
 .. code-block:: python
 
+    from nala.models.elementList import MachineLayout
+    
     layout = MachineLayout(
         name="main_beam",
         sections={"injector": inj_section, "linac": linac_section}
@@ -105,6 +116,8 @@ The machine model supports multiple beam paths and can automatically build secti
 section definition is provided:
 
 .. code-block:: python
+
+    from nala.models.elementList import MachineModel
 
     model = MachineModel(
         layout="layouts.yaml",
