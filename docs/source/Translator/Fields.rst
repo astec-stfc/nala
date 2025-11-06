@@ -50,9 +50,8 @@ object containing the field values and associated units.
 
 Supported field types:
 
-* ``1DElectroStatic``, ``1DMagnetoStatic``, ``1DElectroDynamic``
-* ``2DElectroStatic``, ``2DMagnetoStatic``, ``2DElectroDynamic``
-* ``3DElectroStatic``, ``3DMagnetoStatic``, ``3DElectroDynamic``
+* ``1DMagnetoStatic``, ``1DElectroDynamic``
+* ``2DMagnetoStatic``, ``2DElectroDynamic``
 * ``LongitudinalWake``, ``TransverseWake``, ``3DWake``
 * ``1DQuadrupole``
 
@@ -135,7 +134,6 @@ Field utilities are integrated into the element translator system for handling:
 **RF Cavities:**
   - Standing and travelling wave structures
   - Field amplitude scaling via ``get_field_amplitude``
-  - Phase and frequency management
 
 **Magnets:**
   - Static field maps for solenoids, quadrupoles
@@ -144,8 +142,6 @@ Field utilities are integrated into the element translator system for handling:
 
 **Wakefields:**
   - Longitudinal and transverse wake functions
-  - Geometric and resistive wall wakes
-  - CSR wakefield support (limited)
 
 The :py:class:`BaseElementTranslator <nala.translator.converters.base.BaseElementTranslator>` uses field
 utilities through:

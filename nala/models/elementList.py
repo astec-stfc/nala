@@ -429,7 +429,7 @@ class MachineLayout(BaseLatticeModel):
         if isinstance(filt, (str, list)):
             # make list of valid types
             if isinstance(filt, str):
-                filter_list = [filter.lower()]
+                filter_list = [filt.lower()]
             elif isinstance(filt, list):
                 filter_list = [_type.lower() for _type in filt]
             # apply search criteria

@@ -94,7 +94,94 @@ Full element definitions include electrical, manufacturer, and simulation proper
     # Access nested properties directly
     print(quad.maxI)  # 100.0 (finds electrical.maxI)
     print(quad.serial_number)  # "SN12345"
+    
+Importing from YAML
+-------------------
 
+Elements can also be created from YAML files:
+
+.. code-block:: yaml
+
+  # INJ-MAG-DIP-01.yaml
+  alias: INJ:DIP1
+  controls:
+    variables:
+      readback:
+        description: Readback of INJ-MAG-DIP-01
+        dtype: float
+        identifier: INJ-MAG-DIP-01:RBV
+        protocol: CA
+        read_only: true
+        units: N/A
+      setpoint:
+        description: Setpoint of INJ-MAG-DIP-01
+        dtype: float
+        identifier: INJ-MAG-DIP-01:SP
+        protocol: PVA
+        read_only: true
+        units: N/A
+      state:
+        description: State of INJ-MAG-DIP-01
+        dtype: int
+        identifier: INJ-MAG-DIP-01:STATE
+        protocol: CA
+        read_only: false
+        units: N/A
+  degauss:
+    steps: 11
+    tolerance: 0.5
+    values: [115.77, -115.77, 69.6, -69.6, 46.4, -46.4, 23.2, -23.2, 11.6, -11.6, 0.0]
+  electrical:
+    maxI: 116
+    minI: -116.0
+    read_tolerance: 0.1
+  hardware_class: Magnet
+  hardware_model: Generic
+  hardware_type: Dipole
+  machine_area: INJ
+  magnetic:
+    multipoles: 
+      K0L:
+        normal: 0.5
+        order: 0
+        radius: 0.0
+        skew: 0.0
+    order: 0
+    random_multipoles: {}
+    skew: false
+    systematic_multipoles: {}
+  manufacturer:
+    hardware_class: Dipole
+    manufacturer: Dipole Type 1
+    serial_number: '13256'
+  name: INJ-MAG-DIP-01
+  physical:
+    datum: [-0.14887689, 0.0, 1.18670069]
+    error:
+      position: [0.0, 0.0, 0.0]
+      rotation: [0.0, 0.0, 0.0]
+    global_rotation: [0.0, 0.0, 0.0]
+    length: 0.399216
+    middle: [0.0, 0.0, 1.03782375]
+    rotation: [0.0, 0.0, 0.0]
+    survey:
+      position: [0.0, 0.0, 0.0]
+      rotation: [0.0, 0.0, 0.0]
+  subelement: false
+  virtual_name: V-INJ-MAG-DIP-01
+  
+This can then be loaded in as a :mod:`NALA` object:
+
+.. code-block:: python
+
+  from nala.Importers.YAML_Loader import interpret_YAML_Element, read_YAML_Element_File
+  
+  filename = "INJ-MAG-DIP-01.yaml"
+  
+  inj_dip_01 = read_YAML_Element_File(filename)
+  
+  print(inj_dip_01.middle)
+  
 .. _creating-sections:
 
 Creating Lattice Sections
