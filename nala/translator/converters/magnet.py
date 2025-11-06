@@ -33,7 +33,7 @@ class MagnetTranslator(BaseElementTranslator):
     @property
     def k1(self) -> float:
         """
-        First-order magnetic strength :math:`magnet.KnL(1) \times magnet.magnetic.length \mathrm{[1/m^{2}]}
+        First-order magnetic strength
 
         Returns
         -------
@@ -50,7 +50,7 @@ class MagnetTranslator(BaseElementTranslator):
     @property
     def k2(self) -> float:
         """
-        Second-order magnetic strength :math:`magnet.magnetic.KnL(2) \times magnet.magnetic.length \mathrm{[1/m^{3}]}
+        Second-order magnetic strength
 
         Returns
         -------
@@ -67,7 +67,7 @@ class MagnetTranslator(BaseElementTranslator):
     @property
     def k3(self) -> float:
         """
-        Third-order magnetic strength :math:`magnet.magnetic.KnL(3) \times magnet.magnetic.length \mathrm{[1/m^{4}]}
+        Third-order magnetic strength
 
         Returns
         -------
@@ -83,7 +83,7 @@ class MagnetTranslator(BaseElementTranslator):
     @property
     def k1l(self) -> float:
         """
-        First-order normalized magnetic strength :math:`magnet.KnL(1) \mathrm{[1/m]}`
+        First-order normalized magnetic strength
 
         Returns
         -------
@@ -99,7 +99,7 @@ class MagnetTranslator(BaseElementTranslator):
     @property
     def k2l(self) -> float:
         """
-        Second-order normalized magnetic strength :math:`magnet.KnL(2) \mathrm{[1/m^{2}]}`
+        Second-order normalized magnetic
 
         Returns
         -------
@@ -115,7 +115,7 @@ class MagnetTranslator(BaseElementTranslator):
     @property
     def k3l(self) -> float:
         """
-        Third-order normalized magnetic strength :math:`magnet.KnL(3) \mathrm{[1/m^{3}]}`
+        Third-order normalized magnetic strength
 
         Returns
         -------
@@ -133,7 +133,6 @@ class MagnetTranslator(BaseElementTranslator):
     def dk1(self) -> float:
         """
         Error in first-order magnetic strength
-        :math:`magnet.dKnL(1) \times magnet.magnetic.length \mathrm{[1/m^{2}]}
 
         Currently returns zero...
         # TODO relate these to systematic_ and random_multipoles
@@ -150,7 +149,6 @@ class MagnetTranslator(BaseElementTranslator):
     def dk2(self) -> float:
         """
         Error in second-order magnetic strength
-        :math:`magnet.dKnL(2) \times magnet.magnetic.length \mathrm{[1/m^{3}]}
 
         Currently returns zero...
         # TODO relate these to systematic_ and random_multipoles
@@ -167,7 +165,6 @@ class MagnetTranslator(BaseElementTranslator):
     def dk3(self) -> float:
         """
         Error in third-order magnetic strength
-        :math:`magnet.dKnL(3) \times magnet.magnetic.length \mathrm{[1/m^{4}]}
 
         Currently returns zero...
         # TODO relate these to systematic_ and random_multipoles

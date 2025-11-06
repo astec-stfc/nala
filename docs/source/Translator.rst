@@ -5,10 +5,26 @@ Translator Module
 
 The :mod:`NALA` translator module provides functionality for converting accelerator elements and lattice structures
 into formats compatible with various particle simulation codes. The translation system supports export to multiple
-simulation frameworks including Elegant, Ocelot, Cheetah, Xsuite, Genesis, ASTRA, CSRTrack, GPT, Wake-T, and OPAL.
+simulation codes including:
+
+* `ASTRA <https://www.desy.de/~mpyflo/>`_ :cite:`ASTRA`
+* `GPT <https://www.pulsar.nl/gpt/>`_ :cite:`GPT`
+* `Elegant <https://www.aps.anl.gov/Accelerator-Operations-Physics/Software#elegant>`_ :cite:`Elegant`
+* `CSRTrack <https://www.desy.de/xfel-beam/csrtrack/>`_ :cite:`CSRTrack`
+* `Ocelot <https://github.com/ocelot-collab/ocelot>`_ :cite:`OCELOT`
+* `Xsuite <https://github.com/xsuite>`_ :cite:`Xsuite`
+* `Wake-T <https://github.com/AngelFP/Wake-T/>`_ :cite:`WakeT`
+* `Genesis <https://github.com/svenreiche/Genesis-1.3-Version4>`_ :cite:`Genesis`
 
 The translator module uses a hierarchical approach: individual elements are translated first, then combined into
 sections that can be exported as complete input files or objects for each simulation code.
+
+.. warning::
+
+   :mod:`NALA` in its current state does not support export of **all possible** element types and **all possible**
+   simulation configurations for all codes.
+   
+   If an important feature is missing, then please raise an issue `here <https://github.com/astec-stfc/nala/issues>`_.
 
 .. _base-element-translator:
 
@@ -21,7 +37,7 @@ elements into simulation-specific formats.
 
 Key attributes include:
 
-* ``type_conversion_rules: Dict``: Rules for converting element types between NALA and target codes.
+* ``type_conversion_rules: Dict``: Rules for converting element types between :mod:`NALA` and target codes.
 * ``conversion_rules: Dict``: Rules for converting element keywords/parameters.
 * ``counter: int``: Counter for numbering elements of the same type.
 * ``master_lattice_location: str``: Directory containing lattice and data files.
