@@ -1,6 +1,7 @@
 from typing import Dict, Any
 from warnings import warn
 import numpy as np
+from pydantic import PositiveInt
 
 from ...models.elementList import SectionLattice
 from ...models.RF import WakefieldElement
@@ -24,6 +25,12 @@ class SectionLatticeTranslator(SectionLattice):
     gpt_headers: Dict = {}
 
     opal_headers: Dict = {}
+
+    csr_enable: bool = True
+
+    lsc_enable: bool = True
+
+    lsc_bins: PositiveInt = 20
 
     @classmethod
     def from_section(cls, section: SectionLattice) -> "SectionLatticeTranslator":
@@ -210,7 +217,11 @@ class SectionLatticeTranslator(SectionLattice):
         return fulltext
 
     def to_elegant(self, charge: float = None) -> str:
-        section_with_drifts = self.createDrifts()
+        section_with_drifts = self.createDrifts(
+            csr_enable=self.csr_enable,
+            lsc_enable=self.lsc_enable,
+            lsc_bins=self.lsc_bins,
+        )
         elem_dict = translate_elements(
             section_with_drifts.values(),
             master_lattice_location=self.master_lattice_location,

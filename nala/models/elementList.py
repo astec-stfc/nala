@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from typing import List, Dict, Any, Union
-from pydantic import field_validator, BaseModel, ValidationInfo, Field
+from pydantic import field_validator, BaseModel, ValidationInfo, Field, PositiveInt
 from warnings import warn
 from ._functions import read_yaml, merge_two_dicts
 from .element import baseElement, Drift, PhysicalBaseElement
@@ -9,6 +9,9 @@ from .physical import PhysicalElement, Position
 from .baseModels import ModelBase
 from .exceptions import LatticeError
 import warnings
+
+from .simulation import DriftSimulationElement
+
 
 def dot(a, b) -> float:
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
@@ -153,7 +156,7 @@ class SectionLattice(BaseLatticeModel):
     def _get_all_elements(self) -> ElementList:
         return [self.elements[e] for e in self.order if e in self.elements.names]
 
-    def createDrifts(self):
+    def createDrifts(self, csr_enable: bool=True, lsc_enable: bool=True, lsc_bins: PositiveInt=20):
         """Insert drifts into a sequence of 'elements'"""
         positions = []
         originalelements = dict()
@@ -213,6 +216,11 @@ class SectionLattice(BaseLatticeModel):
                             middle=Position(x=x, y=y, z=z),
                             datum=Position(x=x, y=y, z=z),
                         ),
+                        simulation=DriftSimulationElement(
+                            csr_enable=csr_enable,
+                            lsc_enable=lsc_enable,
+                            lsc_bins=lsc_bins,
+                        )
                     )
                     newelements[name] = newdrift
         return newelements
@@ -498,7 +506,7 @@ class MachineModel(ModelBase):
         if len(self.elements) > 0:
             if self.section:
                 self._build_layouts(self.elements)
-            if self.section is None:
+            else:
                 self._build_sections_from_elements(self.elements)
 
     def __add__(self, other) -> dict:
@@ -597,17 +605,19 @@ class MachineModel(ModelBase):
                         new_elements = [
                             x
                             for x in elements.values()
-                            if (x.name in self._section_definitions[_area])
+                            if x.name in self._section_definitions[_area]
                         ]
-                        self.sections[_area] = SectionLattice(
-                            name=_area,
-                            elements=new_elements,
-                            order=self._section_definitions[_area],
-                            master_lattice_location=self.master_lattice_location,
-                        )
+                        try:
+                            self.sections[_area] = SectionLattice(
+                                name=_area,
+                                elements=new_elements,
+                                order=self._section_definitions[_area],
+                                master_lattice_location=self.master_lattice_location,
+                            )
+                        except KeyError:
+                            pass
                     else:
                         print("MachineModel", "_build_layouts", _area, "missing")
-
                 self.lattices[path] = MachineLayout(
                     name=path,
                     sections={
