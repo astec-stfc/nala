@@ -143,6 +143,9 @@ class baseElement(IgnoreExtra):
     """Flag to indicate whether the element is a subelement of another 
     (i.e. whether they overlap in physical space)."""
 
+    # Define cascading rules: (source_path, target_path)
+    CASCADING_RULES: Dict = {}
+
     @field_validator("name", mode="before")
     @classmethod
     def validate_name(cls, v: str) -> str:
@@ -279,45 +282,47 @@ class baseElement(IgnoreExtra):
 
     def __setattr__(self, name: str, value: Any) -> None:
         """
-        Custom setter: Looks for the attribute in nested models and sets the value.
+        Custom setter with cascading updates for related attributes.
         """
-        # First, allow Pydantic's internal __setattr__ to handle
-        # attributes that belong directly to the 'main' model instance (e.g., private vars, dunder methods)
-        # and its direct Pydantic fields ('physical', 'size').
         cls = self.__class__
-        if name in self.__dict__ or name in cls.model_fields:
+
+        # Allow Pydantic to handle direct fields and internal attributes
+        if name in cls.model_fields or name.startswith('_'):
             super().__setattr__(name, value)
             return
 
-        # Find the path(s) for the nested attribute
-        paths = self._resolve_attribute_path(name)
+        # Try nested lookup
+        try:
+            paths = self._resolve_attribute_path(name)
+        except Exception:
+            super().__setattr__(name, value)
+            return
 
         if not paths:
-            # Not found anywhere nested: Treat as a normal attribute assignment on the main model
-            # This is how Pydantic handles setting a non-field attribute.
             super().__setattr__(name, value)
             return
 
-        elif len(paths) > 1:
-            # Multiple locations found: Print warning and raise error
+        if len(paths) > 1:
             path_strings = [f"'{'.'.join(p)}'" for p in paths]
-            warning_msg = (
-                f"**Ambiguity Warning for '{name}'**: "
-                f"Multiple instances found at: {', '.join(path_strings)}. "
-                f"Cannot set a value. Use the full path (e.g., `main.physical.length = 10.0`) to set a specific one."
-            )
-            warnings.warn(warning_msg, UserWarning)
             raise AttributeError(
                 f"Cannot set ambiguous attribute '{name}'. Found at: {', '.join(path_strings)}. "
-                "Set explicitly (e.g., `main.physical.length = 10.0`)."
+                "Set explicitly."
             )
-            # ✅ If it's a property with a setter, Python handles it
-        try:
-            self._set_nested_attribute(paths[0], value)
-        except AttributeError as e:
-            raise AttributeError(
-                f"Attribute '{name}' at path '{'.'.join(paths[0])}' is read-only or missing a setter."
-            ) from e
+
+        # Set the nested attribute
+        self._set_nested_attribute(paths[0], value)
+
+        # Handle cascading updates
+        self._handle_cascading_updates(paths[0], value)
+
+    def _handle_cascading_updates(self, path: Tuple[str, ...], value: Any) -> None:
+        """
+        Handle cascading attribute updates across nested models.
+        """
+
+        for source_path, target_path in self.CASCADING_RULES.items():
+            if path == source_path:
+                self._set_nested_attribute(target_path, value)
 
     def to_CATAP(self) -> dict:
         return {
@@ -534,6 +539,11 @@ class Dipole(Magnet):
 
     hardware_type: str = Field(default="Dipole", frozen=True)
     magnetic: Dipole_Magnet = Field(default_factory=Dipole_Magnet)
+
+    # Define cascading rules: (source_path, target_path)
+    CASCADING_RULES: Dict = {
+        ("magnetic", "angle"): ("physical", "physical_angle"),
+    }
 
 
 class Quadrupole(Magnet):

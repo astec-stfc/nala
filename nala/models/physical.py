@@ -102,6 +102,8 @@ class ElementError(IgnoreExtra):
     def validate_position(cls, v: Union[Position, List, np.ndarray]) -> Position:
         if isinstance(v, (list, tuple, np.ndarray)) and len(v) == 3:
             return Position(x=v[0], y=v[1], z=v[2])
+        elif isinstance(v, Position):
+            return v
         else:
             raise ValueError("position should be a number or a list of floats")
 
@@ -110,6 +112,8 @@ class ElementError(IgnoreExtra):
     def validate_rotation(cls, v: Union[Rotation, List, np.ndarray]) -> Position:
         if isinstance(v, (list, tuple, np.ndarray)) and len(v) == 3:
             return Rotation(theta=v[0], phi=v[1], psi=v[2])
+        elif isinstance(v, Rotation):
+            return v
         else:
             raise ValueError("rotation should be a number or a list of floats")
 
@@ -153,7 +157,7 @@ class PhysicalElement(IgnoreExtra):
     error: ElementError = ElementError()
     survey: ElementSurvey = ElementSurvey()
     length: float = 0.0
-    angle: float = 0.0
+    physical_angle: float = 0.0
 
     def __str__(self):
         cls = self.__class__
@@ -223,8 +227,8 @@ class PhysicalElement(IgnoreExtra):
         sx = 0
         sy = 0
         sz = (
-            1.0 * self.length * np.tan(0.5 * self.angle) / self.angle
-            if hasattr(self, "angle") and abs(self.angle) > 1e-9
+            1.0 * self.length * np.tan(0.5 * self.physical_angle) / self.physical_angle
+            if abs(self.physical_angle) > 1e-9
             else 1.0 * self.length / 2.0
         )
         vec = [sx, sy, sz]
@@ -234,14 +238,14 @@ class PhysicalElement(IgnoreExtra):
     @property
     def end(self) -> Position:
         ex = (
-            (self.length * (1 - np.cos(self.angle))) / self.angle
-            if hasattr(self, "angle") and abs(self.angle) > 1e-9
+            (self.length * (1 - np.cos(self.physical_angle))) / self.physical_angle
+            if abs(self.physical_angle) > 1e-9
             else 0
         )
         ey = 0
         ez = (
-            (self.length * (np.sin(self.angle))) / self.angle
-            if hasattr(self, "angle") and abs(self.angle) > 1e-9
+            (self.length * (np.sin(self.physical_angle))) / self.physical_angle
+            if abs(self.physical_angle) > 1e-9
             else self.length
         )
         vec = [ex, ey, ez]
