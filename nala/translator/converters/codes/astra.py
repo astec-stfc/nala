@@ -213,7 +213,7 @@ class astra_output(astra_header):
             "sample_interval": "n_red",
             "toffset": "Toff",
         }
-        self.exclude.extend(["screens", "section", "end_element"])#, "starting_offset"])
+        self.exclude.extend(["screens", "section", "end_element", "start_element"])#, "starting_offset"])
         # self.zstart = list(self.section.elements.elements.values())[0].physical.start.z
         # self.zstop = list(self.section.elements.elements.values())[-1].physical.end.z
         # self.zemit = int((self.zstop - self.zstart) / 0.01)
@@ -328,6 +328,7 @@ class astra_charge(astra_header):
         str
             ASTRA-compatible string representing the namelist
         """
+        self.space_charge()
         output = f"&{self.header}\n"
         for key, val in self.model_dump().items():
             if key not in self.exclude and val is not None:
@@ -342,11 +343,14 @@ class astra_charge(astra_header):
             output += f"nxf = {self.grid_size},\n"
             output += f"nyf = {self.grid_size},\n"
             output += f"nzf = {self.grid_size},\n"
+        elif self.space_charge():
+            output += f"nxf = {self.grid_size},\n"
+            output += f"nyf = {self.grid_size},\n"
+            output += f"nzf = {self.grid_size},\n"
         output = output[:-2] + "\n"
         output += "/\n"
         return output
 
-    @property
     def space_charge(self) -> bool:
         """
         Flag to indicate whether space charge is enabled.
@@ -356,12 +360,22 @@ class astra_charge(astra_header):
         bool
             True if enabled
         """
-        return not (
+        if not (
             self.space_charge_mode == "False"
             or self.space_charge_mode is False
             or self.space_charge_mode is None
             or self.space_charge_mode == "None"
-        )
+        ):
+            self.space_charge_3D = True
+            if isinstance(self.space_charge_mode, str):
+                if "2d" in self.space_charge_mode.lower():
+                    self.space_charge_2D = True
+                    self.space_charge_3D = False
+            return True
+        self.space_charge_2D = False
+        self.space_charge_3D = False
+        return False
+
 
     @property
     def grid_size(self) -> int:
