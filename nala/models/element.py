@@ -4,9 +4,9 @@ NALA Element Module
 The main class for representing accelerator elements in NALA.
 """
 import os
-from typing import Type, List, Union, Dict, Tuple, Any
+from typing import Type, List, Union, Dict, Tuple, Any, get_args, get_origin
 from pydantic import field_validator, Field, BaseModel
-import warnings
+import types
 from .control import ControlsInformation
 
 from .baseModels import T, Aliases, IgnoreExtra
@@ -185,6 +185,12 @@ class baseElement(IgnoreExtra):
     #         magnetPV.area + "-" + magnetPV.typename + str(magnetPV.index),
     #     ]
 
+    def _resolve_attribute_path(self, attr_name: str) -> List[Tuple[str, ...]]:
+        """
+        Helper to get the full path(s) for a given attribute name.
+        """
+        return self._find_field_paths(attr_name, self.__class__)
+
     @classmethod
     def _find_field_paths(
             cls: Type['main'],
@@ -206,8 +212,26 @@ class baseElement(IgnoreExtra):
 
             # 2. Check if the field is a nested Pydantic model (recursive step)
             field_annotation = field_info.annotation
-            if isinstance(field_annotation, type) and issubclass(field_annotation, BaseModel):
-                paths.extend(cls._find_field_paths(attr_name, field_annotation, new_path))
+            origin = get_origin(field_annotation)
+
+            # Unwrap Union/Optional types to get the actual class
+            is_union = origin is Union or isinstance(field_annotation, types.UnionType)
+            if is_union:
+                args = get_args(field_annotation)
+                for arg in args:
+                    if arg is not type(None):
+                        try:
+                            if isinstance(arg, type) and issubclass(arg, BaseModel):
+                                paths.extend(cls._find_field_paths(attr_name, arg, new_path))
+                        except TypeError:
+                            # arg might not be a class, skip it
+                            pass
+            else:
+                try:
+                    if isinstance(field_annotation, type) and issubclass(field_annotation, BaseModel):
+                        paths.extend(cls._find_field_paths(attr_name, field_annotation, new_path))
+                except TypeError:
+                    pass
 
         for name, attr in vars(current_model).items():
             if isinstance(attr, property) and name == attr_name:
@@ -215,19 +239,14 @@ class baseElement(IgnoreExtra):
 
         return paths
 
-    def _resolve_attribute_path(self, attr_name: str) -> List[Tuple[str, ...]]:
-        """
-        Helper to get the full path(s) for a given attribute name.
-        """
-        return self._find_field_paths(attr_name, self.__class__)
-
     def _get_nested_attribute(self, path: Tuple[str, ...]) -> Any:
         """
         Accesses a nested attribute using its path.
         """
-        # path is guaranteed to have at least two elements (parent_model, field_name)
         value = self
         for step in path:
+            if value is None:
+                raise AttributeError(f"Cannot access '{step}' on None value at path '{'.'.join(path)}'")
             value = getattr(value, step)
         return value
 
@@ -235,119 +254,70 @@ class baseElement(IgnoreExtra):
         """
         Sets a nested attribute using its path.
         """
-        # path is guaranteed to have at least two elements (parent_model, field_name)
         target_model = self
 
-        # Traverse to the second to last element (the parent model)
+        # Traverse to the second to last element
         for step in path[:-1]:
             target_model = getattr(target_model, step)
+            if target_model is None:
+                raise AttributeError(f"Cannot set attribute at path '{'.'.join(path)}': intermediate value is None")
 
-        # Set the attribute on the parent model using Pydantic's setter
-        # This is CRUCIAL to allow Pydantic to run validation/coercion on the value.
+        # Set the attribute
         setattr(target_model, path[-1], value)
-
-    # --- Overridden Methods ---
 
     def __getattr__(self, name: str) -> Any:
         """
         Custom getter: Looks for the attribute in nested models.
-
-        For example, if your element has `element.simulation.field_amplitude`, then
-        `getattr(element, "field_amplitude")` will retrieve that nested attribute.
-
-        If there are repeated names for attributes across the models, then an `AttributeError` will be raised.
-        For example, a magnet has `magnet.physical.length` and `magnet.magnetic.length`, so
-        `getattr(magnet, "length")` will not work.
-
-        Args:
-            name (str): Name of the attribute to find.
-
-        Returns:
-            Any: Value of the attribute
-
-        Raises:
-            AttributeError: If `name` matches multiple attributes in the nested models.
         """
+        # Avoid recursion on special attributes
+        if name.startswith('_'):
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+
         paths = self._resolve_attribute_path(name)
 
         if not paths:
-            # If not found anywhere, raise the standard AttributeError
             raise AttributeError(f"'{self.__class__.__name__}' object and its nested models have no attribute '{name}'")
 
-        elif len(paths) > 1:
-            # Multiple locations found: Print warning and list paths
+        if len(paths) > 1:
             path_strings = [f"'{'.'.join(p)}'" for p in paths]
-            warning_msg = (
-                f"**Ambiguity Warning for '{name}'**: "
-                f"Multiple instances found at: {', '.join(path_strings)}. "
-                f"Use the full path (e.g., `main.physical.length`) to access a specific one."
-            )
-            warnings.warn(warning_msg, UserWarning)
-            # Standard practice is to return the first found value in ambiguous cases
-            # or raise an error. We'll raise the standard error here to force
-            # the user to be explicit when ambiguity exists.
             raise AttributeError(
                 f"Attribute '{name}' is ambiguous. Found at: {', '.join(path_strings)}. "
-                "Access explicitly (e.g., `main.physical.length`)."
+                "Access explicitly (e.g., `element.simulation.field_amplitude`)."
             )
-        # ✅ If property, getattr() will naturally return the computed value
+
         return self._get_nested_attribute(paths[0])
 
     def __setattr__(self, name: str, value: Any) -> None:
         """
         Custom setter: Looks for the attribute in nested models and sets the value.
-
-        For example, if your element has `element.simulation.field_amplitude`, then
-        `setattr(element, "field_amplitude", 10)` will set that nested attribute.
-
-        If there are repeated names for attributes across the models, then an `AttributeError` will be raised.
-        For example, a magnet has `magnet.physical.length` and `magnet.magnetic.length`, so
-        `setattr(magnet, "length" 1.0)` will not work.
-
-        Args:
-            name (str): Name of the attribute to find.
-            value (Any): Value of attribute to set.
-
-        Raises:
-            AttributeError: If `name` matches multiple attributes in the nested models.
         """
-        # First, allow Pydantic's internal __setattr__ to handle
-        # attributes that belong directly to the 'main' model instance (e.g., private vars, dunder methods)
-        # and its direct Pydantic fields ('physical', 'size').
         cls = self.__class__
-        if name in self.__dict__ or name in cls.model_fields:
+
+        # Allow Pydantic to handle direct fields and internal attributes
+        if name in cls.model_fields or name.startswith('_'):
             super().__setattr__(name, value)
             return
 
-        # Find the path(s) for the nested attribute
-        paths = self._resolve_attribute_path(name)
+        # Try to find in nested models
+        try:
+            paths = self._resolve_attribute_path(name)
+        except Exception:
+            # If lookup fails, fall back to normal behavior
+            super().__setattr__(name, value)
+            return
 
         if not paths:
-            # Not found anywhere nested: Treat as a normal attribute assignment on the main model
-            # This is how Pydantic handles setting a non-field attribute.
             super().__setattr__(name, value)
             return
 
-        elif len(paths) > 1:
-            # Multiple locations found: Print warning and raise error
+        if len(paths) > 1:
             path_strings = [f"'{'.'.join(p)}'" for p in paths]
-            warning_msg = (
-                f"**Ambiguity Warning for '{name}'**: "
-                f"Multiple instances found at: {', '.join(path_strings)}. "
-                f"Cannot set a value. Use the full path (e.g., `main.physical.length = 10.0`) to set a specific one."
-            )
-            warnings.warn(warning_msg, UserWarning)
             raise AttributeError(
                 f"Cannot set ambiguous attribute '{name}'. Found at: {', '.join(path_strings)}. "
-                "Set explicitly (e.g., `main.physical.length = 10.0`)."
+                "Set explicitly (e.g., `element.simulation.field_amplitude = value`)."
             )
-            # ✅ If it's a property with a setter, Python handles it
-        try:
-            self._set_nested_attribute(paths[0], value)
-        except AttributeError as e:
-            raise AttributeError(
-                f"Attribute '{name}' at path '{'.'.join(paths[0])}' is read-only or missing a setter."
-            ) from e
+
+        self._set_nested_attribute(paths[0], value)
 
     def to_CATAP(self) -> dict:
         return {
@@ -495,7 +465,7 @@ class Element(PhysicalBaseElement):
     electrical: ElectricalElement | None = Field(default_factory=ElectricalElement)
     """Electrical attributes of the element."""
 
-    manufacturer: ManufacturerElement | None= Field(default_factory=ManufacturerElement)
+    manufacturer: ManufacturerElement | None = Field(default_factory=ManufacturerElement)
     """Manufacturer attributes of the element."""
 
     simulation: SimulationElement = Field(default_factory=SimulationElement)

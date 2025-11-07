@@ -25,17 +25,10 @@ Architecture
 .. toctree::
    :maxdepth: 2
 
-   Architecture/Element
-   Architecture/Lattice
+   Architecture/index
    Translator
    Examples
 
-.. toctree::
-   :hidden:
-
-   Architecture/Element/Auxiliary
-   Architecture/Element/Magnet
-   Translator/Fields
    
 Participation
 -------------

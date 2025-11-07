@@ -338,13 +338,13 @@ class MagneticElement(IgnoreExtra):
     random_multipoles: Multipoles = Multipoles()
     """Random magnetic multipoles."""
 
-    field_integral_coefficients: FieldIntegral | None = None #FieldIntegral()
+    field_integral_coefficients: FieldIntegral | None = None  # FieldIntegral()
     """Field integral coefficients."""
 
-    linear_saturation_coefficients: LinearSaturationFit | None  = None #LinearSaturationFit()
+    linear_saturation_coefficients: LinearSaturationFit | None = None  # LinearSaturationFit()
     """Linear saturation fit coefficients."""
 
-    settle_time: float | None = None # Field(alias="mag_set_max_wait_time", default=45.0)
+    settle_time: float | None = None  # Field(alias="mag_set_max_wait_time", default=45.0)
     """
     Maximum time to wait for the magnet current to settle [s].
     #TODO move to electrical?
@@ -376,6 +376,7 @@ class MagneticElement(IgnoreExtra):
 
     fringe_field_coefficient: float = Field(default=0.0)
     """Fringe field coefficient."""
+
 
     def __init__(self, /, **data: Any) -> None:
         super().__init__(**data)
@@ -755,12 +756,12 @@ class Wiggler_Magnet(IgnoreExtra):
     @property
     def normalized_strength(self) -> float:
         """
-        Getter for the normalised undulator strength :math:`\a_w`
+        Getter for the normalised undulator strength :math:`a_w`
 
         Returns
         -------
         float:
-            :attr:`~strength` / :math:`\sqrt{2}`
+            :attr:`~strength` / :math:`\\sqrt{2}`
         """
 
         if not self.helical:
@@ -771,12 +772,12 @@ class Wiggler_Magnet(IgnoreExtra):
     @normalized_strength.setter
     def normalized_strength(self, aw: float) -> None:
         """
-        Setter for the normalised undulator strength :math:`\a_w`
+        Setter for the normalised undulator strength :math:`a_w`
 
         Parameters
         ----------
         aw: float
-            :attr:`~strength` = :math:`\a_w \times \sqrt{2}`
+            :attr:`~strength` = :math:`a_w \\times \\sqrt{2}`
         """
         if not self.helical:
             self.strength = aw * np.sqrt(2)

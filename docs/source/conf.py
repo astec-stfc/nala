@@ -93,6 +93,8 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinxcontrib.bibtex",
     "sphinx_autodoc_typehints",
+    #"sphinxcontrib.autodoc_pydantic",
+    "sphinx.ext.mathjax",  # enables math rendering
     #"myst_nb",
 ]
 
@@ -125,13 +127,13 @@ autodoc_pydantic_model_show_json = (
     False  # don't include JSON schema for pydantic models
 )
 autodoc_pydantic_model_show_field_summary = (
-    False  # don't include a bullet-point list of model fields
+    True  # don't include a bullet-point list of model fields
 )
 autodoc_pydantic_model_show_config_summary = (
     False  # don't include model configurations for pydantic models
 )
 autodoc_pydantic_field_list_validators = (
-    False  # don't list validators for pydantic model fields
+    True  # don't list validators for pydantic model fields
 )
 autodoc_pydantic_field_show_constraints = (
     False  # don't list constraints for pydantic model fields
@@ -142,7 +144,8 @@ autodoc_pydantic_model_show_validator_summary = (
 autodoc_pydantic_model_show_validator_members = (
     False  # don't include documentation for validator methods
 )
-autodoc_typehints = "none"
+autodoc_pydantic_field_doc_policy = "both"  # shows docstrings and Field descriptions
+#autodoc_typehints = "none"
 
 autodoc_mock_imports = [
     #"nala.models.elementList",  # or whichever module fails
@@ -170,7 +173,8 @@ autodoc_default_options = {
         "dict",
         "json",
     ]),
-    "undoc-members": False,
+    "members": True,
+    "undoc-members": True,
     "inherited-members": False,
 }
 

@@ -201,7 +201,7 @@ Sections group elements into ordered sequences:
         hardware_class="Diagnostic",
         hardware_type="BPM",
         machine_area="INJECTOR",
-        physical={"middle": {"z": 1.0}, "length": 0.1}
+        physical={"middle": {"x": 0.0, "y": 0.0, "z": 1.0}, "length": 0.1}
     )
 
     elem2 = PhysicalBaseElement(
@@ -209,7 +209,7 @@ Sections group elements into ordered sequences:
         hardware_class="Magnet",
         hardware_type="Quadrupole",
         machine_area="INJECTOR",
-        physical={"middle": {"z": 2.0}, "length": 0.2}
+        physical={"middle": {"x": 0.0, "y": 0.0, "z": 2.0}, "length": 0.2}
     )
 
     elem3 = PhysicalBaseElement(
@@ -217,7 +217,7 @@ Sections group elements into ordered sequences:
         hardware_class="Diagnostic",
         hardware_type="BPM",
         machine_area="INJECTOR",
-        physical={"middle": {"z": 3.0}, "length": 0.1}
+        physical={"middle": {"x": 0.0, "y": 0.0, "z": 3.0}, "length": 0.1}
     )
 
     # Create section with ordered elements
@@ -290,14 +290,14 @@ Layouts combine multiple sections into beam paths:
                 hardware_class="RF",
                 hardware_type="Cavity",
                 machine_area="LINAC-1",
-                physical={"middle": {"z": 10.0}, "length": 1.0}
+                physical={"middle": {"x": 0.0, "y": 0.0, "z": 10.0}, "length": 1.0}
             ),
             "BPM-03": PhysicalBaseElement(
                 name="BPM-03",
                 hardware_class="Diagnostic",
                 hardware_type="BPM",
                 machine_area="LINAC-1",
-                physical={"middle": {"z": 12.0}, "length": 0.1}
+                physical={"middle": {"x": 0.0, "y": 0.0, "z": 12.0}, "length": 0.1}
             )
         })
     )
