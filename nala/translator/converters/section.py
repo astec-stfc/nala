@@ -16,24 +16,59 @@ from ..utils.fields import field
 
 
 class SectionLatticeTranslator(SectionLattice):
+    """
+    Translator class for converting a :class:`~nala.models.elementList.SectionLattice` instance into a string or
+    object that can be understood by various simulation codes.
+    """
+
     directory: str = '.'
+    """Directory to which files will be written."""
 
     astra_headers: Dict = {}
+    """Headers for ASTRA input file; see :class:`~nala.translator.converters.codes.astra.astra_header`
+    and its child classes."""
 
     csrtrack_headers: Dict = {}
+    """Headers for CSRTrack input file; see :class:`~nala.translator.converters.codes.csrtrack.csrtrack_element`
+    and its child classes.."""
 
     gpt_headers: Dict = {}
+    """Headers for GPT input file; see :class:`~nala.translator.converters.codes.astra.gpt_element`
+    and its child classes.."""
 
     opal_headers: Dict = {}
+    """Headers for OPAL input file; see :class:`~nala.translator.converters.codes.opal.opal_header`
+    and its child classes..
+    
+    WARNING: OPAL not fully benchmarked / tested.
+    """
 
     csr_enable: bool = True
+    """Flag to enable calculation of CSR in drifts."""
 
     lsc_enable: bool = True
+    """Flag to enable calculation of LSC in drifts."""
 
     lsc_bins: PositiveInt = 20
+    """Number of LSC bins for drifts."""
 
     @classmethod
     def from_section(cls, section: SectionLattice) -> "SectionLatticeTranslator":
+        """
+        Method for creating an instance of this class based on an existing
+        :class:`~nala.models.elementList.SectionLattice`.
+
+        Parameters
+        ----------
+        section: SectionLattice
+            The existing :class:`~nala.models.elementList.SectionLattice`
+
+        Returns
+        -------
+        :class:`~nala.translator.converters.section.SectionLatticeTranslator`
+            An instance of this class.
+
+        """
         return cls.model_validate(
             {
                 "name": section.model_copy().name,
@@ -44,6 +79,15 @@ class SectionLatticeTranslator(SectionLattice):
         )
 
     def to_astra(self) -> str:
+        """
+        Create an ASTRA-compatible input file based on the lattice information and
+        the settings provided in :attr:`~astra_headers`.
+
+        Returns
+        -------
+        str
+            An ASTRA-compatible input file.
+        """
         from .codes.astra import section_header_text_ASTRA
         headers = ["&APERTURE", "&CAVITY", "&SOLENOID", "&QUADRUPOLE", "&DIPOLE", "&WAKE"]
         counter = {k: 1 for k in headers}
@@ -95,6 +139,27 @@ class SectionLatticeTranslator(SectionLattice):
         return astrastr
 
     def to_gpt(self, startz: float, endz: float, Brho: float = 0.0) -> str:
+        """
+        Create a GPT-compatible input file based on the lattice information and
+        the settings provided in :attr:`~gpt_headers`.
+
+        Note that, for sections with accelerating sections, the magnetic rigidity `Brho` may not
+        be updated correctly, which may affect the accuracy of tracking through dipoles.
+
+        Parameters
+        ----------
+        startz: float
+            Start longitudinal location of the lattice.
+        endz: float
+            End longitudinal location of the lattice.
+        Brho: float
+            Magnetic rigidity.
+
+        Returns
+        -------
+        str
+            A GPT-compatible input file.
+        """
         fulltext = ""
         for header in self.gpt_headers.values():
             fulltext += header.write_GPT()
@@ -165,6 +230,25 @@ class SectionLatticeTranslator(SectionLattice):
         return fulltext
 
     def to_opal(self, energy: float = 0, breakstr: str="") -> str:
+        """
+        Create an OPAL-compatible input file based on the lattice information and
+        the settings provided in :attr:`~opal_headers`.
+
+        Note that, for sections with accelerating sections, the beam energy `energy` may not
+        be updated correctly, which may affect the accuracy of tracking through dipoles.
+
+        Parameters
+        ----------
+        energy: float
+            Beam energy
+        breakstr: str
+            String for separating sections in the lattice file.
+
+        Returns
+        -------
+        str
+            An OPAL-compatible input file.
+        """
         check_dict = [
             "option",
             "distribution",
@@ -217,6 +301,19 @@ class SectionLatticeTranslator(SectionLattice):
         return fulltext
 
     def to_elegant(self, charge: float = None) -> str:
+        """
+        Create an ELEGANT-compatible input file based on the lattice information.
+
+        Parameters
+        ----------
+        charge: float
+            Bunch charge
+
+        Returns
+        -------
+        str
+            An ELEGANT-compatible lattice file.
+        """
         section_with_drifts = self.createDrifts(
             csr_enable=self.csr_enable,
             lsc_enable=self.lsc_enable,
@@ -243,6 +340,14 @@ class SectionLatticeTranslator(SectionLattice):
         return string
 
     def to_genesis(self) -> str:
+        """
+        Create a Genesis-compatible input file based on the lattice information.
+
+        Returns
+        -------
+        str
+            A Genesis-compatible lattice file (v4).
+        """
         section_with_drifts = self.createDrifts()
         elem_dict = translate_elements(
             section_with_drifts.values(),
@@ -261,6 +366,19 @@ class SectionLatticeTranslator(SectionLattice):
         return string
 
     def to_ocelot(self, save=False) -> "MagneticLattice":
+        """
+        Create an Ocelot-compatible magnetic lattice object based on the lattice information.
+
+        Parameters
+        ----------
+        save: bool
+            Flag to indicate whether to save the lattice to a file.
+
+        Returns
+        -------
+        MagneticLattice
+            An Ocelot `MagneticLattice` object.
+        """
         from ocelot.cpbd.magnetic_lattice import MagneticLattice
         from ocelot.cpbd.transformations.second_order import SecondTM
         from ocelot.cpbd.transformations.kick import KickTM
@@ -285,6 +403,19 @@ class SectionLatticeTranslator(SectionLattice):
         return maglat
 
     def to_cheetah(self, save=False) -> "Segment":
+        """
+        Create a Cheetah-compatible lattice segment object based on the lattice information.
+
+        Parameters
+        ----------
+        save: bool
+            Flag to indicate whether to save the lattice to a file.
+
+        Returns
+        -------
+        Segment
+            A Cheetah `Segment` object.
+        """
         from cheetah import Segment
         section_with_drifts = self.createDrifts()
         elem_dict = translate_elements(
@@ -312,7 +443,26 @@ class SectionLatticeTranslator(SectionLattice):
 
         return full_segment
 
-    def to_xsuite(self, beam_length: int, env: Any = None, particle_ref: Any = None, save=True) -> object:
+    def to_xsuite(self, beam_length: int, env: Any = None, particle_ref: Any = None, save=True) -> "Line":
+        """
+        Create an Xsuite-compatible lattice line object based on the lattice information.
+
+        Parameters
+        ----------
+        beam_length: int
+            Number of particles in the beam
+        env: xtrack.Environment
+            xtrack Environment object; if `None`, it will be created
+        particle_ref: xtrack.Particles
+            xtrack Particles object
+        save: bool
+            Flag to indicate whether to save the `Line` to JSON.
+
+        Returns
+        -------
+        Segment
+            A Xsuite `Line` object.
+        """
         import xtrack as xt
         if not isinstance(env, xt.Environment):
             env = xt.Environment()
@@ -336,6 +486,15 @@ class SectionLatticeTranslator(SectionLattice):
         return line
 
     def to_csrtrack(self) -> str:
+        """
+        Create a CSRTrack-compatible input file based on the lattice information and
+        the settings provided in :attr:`~csrtrack_headers`.
+
+        Returns
+        -------
+        str
+            A CSRTrack-compatible lattice file.
+        """
         headers = ["dipole", "quadrupole", "screen"]
         counter = {k: 1 for k in headers}
         elem_dict = translate_elements(
@@ -369,6 +528,14 @@ class SectionLatticeTranslator(SectionLattice):
         return csrtrackstr
 
     def to_wake_t(self) -> "Beamline":
+        """
+        Create a Wake-T-compatible beamline object based on the lattice information.
+
+        Returns
+        -------
+        Segment
+            A Wake-T `Beamline` object.
+        """
         from wake_t import Beamline
         section_with_drifts = self.createDrifts()
         elem_dict = translate_elements(

@@ -3,9 +3,31 @@ from nala.models.RF import WakefieldElement
 from ..utils.fields import field
 
 class WakefieldTranslator(BaseElementTranslator):
+    """
+    Translator class for converting a :class:`~nala.models.element.Wakefield` instance into a string or
+    object that can be understood by various simulation codes.
+    """
+
     cavity: WakefieldElement
+    """Wakefield element."""
 
     def to_astra(self, n: int = 0, **kwargs: dict) -> str:
+        """
+        Writes the wakefield element string for ASTRA;
+        see :func:`~_write_ASTRA`.
+
+        Parameters
+        ----------
+        n: int
+            Element index number
+        **kwargs: dict
+            Keyword args
+
+        Returns
+        -------
+        str
+            String representation of the element for ASTRA
+        """
         self.start_write()
         return self._write_ASTRA(n=n)
 
@@ -90,6 +112,21 @@ class WakefieldTranslator(BaseElementTranslator):
         return output
 
     def to_gpt(self, Brho: float = 0.0, ccs: str="wcs", *args, **kwargs) -> str:
+        """
+        Write a string representation of the wakefield for GPT.
+
+        Parameters
+        ----------
+        Brho: float
+            Magnetic rigidity.
+        ccs: str
+            Name of co-ordinate system of the wakefield.
+
+        Returns
+        -------
+        str
+            String representation of the wakefield for GPT.
+        """
         self.start_write()
         field_ref_pos = self.get_field_reference_position()
         field_file_name = self.generate_field_file_name(

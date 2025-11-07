@@ -20,11 +20,11 @@ tw_required_attrs = [
 
 def read_HDF5_field_file(self, filename: str) -> str:
     """
-    Read an HDF5 field file and convert it into a :class:`SimulationFramework.Modules.Fields.field` object
+    Read an HDF5 field file and convert it into a :class:`nala.translator.utils.fields.field` object
 
     Parameters
     ----------
-    self: :class:`~SimulationFramework.Modules.Fields.field`
+    self: :class:`~nala.translator.utils.fields.field`
         The field object.
     filename: str
         The path to the HDF5 field file
@@ -37,10 +37,10 @@ def read_HDF5_field_file(self, filename: str) -> str:
     Raises
     ------
     KeyError:
-        if the `cavity_type` attribute is not in :attr:`~SimulationFramework.Modules.Fields.allowed_cavities
+        if the `cavity_type` attribute is not in :attr:`~nala.translator.utils.fields.allowed_cavities
     KeyError:
         if `cavity_type==TravellingWave` and all the required attributes are not defined in the file;
-         see :attr:`~SimulationFramework.Modules.Fields.tw_required_attrs
+         see :attr:`~nala.translator.utils.fields.tw_required_attrs
     Warning:
         if a given parameter in the field is not normalised to 1.0
     """
@@ -107,13 +107,13 @@ def read_HDF5_field_file(self, filename: str) -> str:
 
 def write_HDF5_field_file(self):
     """
-    Write the :class:`SimulationFramework.Modules.Fields.field` object to an HDF5 file.
+    Write the :class:`nala.translator.utils.fields.field` object to an HDF5 file.
     All of the attributes of the class are read, and if they are defined and in the correct format,
     they are written to the file.
 
     Parameters
     ----------
-    self: :class:`~SimulationFramework.Modules.Fields.field`
+    self: :class:`~nala.translator.utils.fields.field`
         The field object to be saved.
 
     Returns

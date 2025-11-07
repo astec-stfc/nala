@@ -33,6 +33,21 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
 ]
 
+[project.optional-dependencies]
+
+test = [
+    "pytest",
+    "pytest-cov",
+]
+
+docs = [
+    "sphinx>=8",
+    "sphinx-rtd-theme",
+    "myst-nb",
+    "sphinx_autodoc_typehints>=3",
+    "sphinxcontrib-bibtex",
+]
+
 [project.urls]
 Homepage = "https://github.com/astec-stfc/nala"
 Repository = "https://github.com/astec-stfc/nala.git"

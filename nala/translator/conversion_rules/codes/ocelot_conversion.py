@@ -53,4 +53,5 @@ ocelot_conversion_rules = {
     "Combined_Corrector": Hcor,
     "Marker": Marker,
     "Laser": Drift,
+    "Plasma": Drift,
 }

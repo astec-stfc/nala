@@ -1,6 +1,6 @@
 import numpy as np
 from pydantic import field_validator, confloat, Field, AliasChoices
-from typing import List, Type, Union
+from typing import List, Type, Union, Dict
 
 from ._functions import _rotation_matrix
 
@@ -8,11 +8,18 @@ from .baseModels import IgnoreExtra, NumpyVectorModel, T
 
 
 class Position(NumpyVectorModel):
-    """Position model."""
+    """
+    Position model. Cartesian co-ordinates are used.
+    """
 
     x: float = 0.0
+    """Horizontal position [m]."""
+
     y: float = 0.0
+    """Vertical position [m]."""
+
     z: float = 0.0
+    """Longitudinal position [m]."""
 
     def __add__(self, other: Type[T]) -> T:
         return Position(
@@ -47,11 +54,18 @@ class Position(NumpyVectorModel):
 
 
 class Rotation(NumpyVectorModel):
-    """Rotation model."""
+    """
+    Rotation model.
+    """
 
     phi: confloat(ge=-np.pi, le=np.pi) = 0.0  # type: ignore
+    """Rotation about the horizontal axis [rad]."""
+
     psi: confloat(ge=-np.pi, le=np.pi) = 0.0  # type: ignore
+    """Rotation about the vertical axis [rad]."""
+
     theta: confloat(ge=-np.pi, le=np.pi) = 0.0  # type: ignore
+    """Rotation about the longitudinal axis [rad]."""
 
     def __add__(self, other: Type[T]) -> T:
         return Rotation(
@@ -92,14 +106,19 @@ class Rotation(NumpyVectorModel):
 
 
 class ElementError(IgnoreExtra):
-    """Position/Rotation error model."""
+    """
+    Position/Rotation error model.
+    """
 
     position: Union[Position, List[Union[float, int]]] = Position(x=0, y=0, z=0)
+    """Errors in position."""
+
     rotation: Union[Rotation, List[Union[float, int]]] = Rotation(theta=0, phi=0, psi=0)
+    """Errors in rotation."""
 
     @field_validator("position", mode="before")
     @classmethod
-    def validate_position(cls, v: Union[Position, List, np.ndarray]) -> Position:
+    def validate_position(cls, v: Union[Position, Dict, List, np.ndarray]) -> Position:
         if isinstance(v, (list, tuple, np.ndarray)) and len(v) == 3:
             return Position(x=v[0], y=v[1], z=v[2])
         elif isinstance(v, Position):
@@ -118,7 +137,7 @@ class ElementError(IgnoreExtra):
 
     @field_validator("rotation", mode="before")
     @classmethod
-    def validate_rotation(cls, v: Union[Rotation, List, np.ndarray]) -> Position:
+    def validate_rotation(cls, v: Union[Rotation, Dict, List, np.ndarray]) -> Rotation:
         if isinstance(v, (list, tuple, np.ndarray)) and len(v) == 3:
             return Rotation(theta=v[0], phi=v[1], psi=v[2])
         elif isinstance(v, Rotation):
@@ -164,18 +183,33 @@ class ElementSurvey(ElementError):
 
 
 class PhysicalElement(IgnoreExtra):
-    """Physical info model."""
+    """
+    Physical info model.
+    """
 
-    middle: Position = Field(
-        alias=AliasChoices("position", "centre"), default=Position()
-    )
+    middle: Position = Field(default=Position(), alias=AliasChoices("position", "centre"))
+    """Middle position of the element."""
+
     datum: Position = Field(default=0)
+    """Datum."""
+
     rotation: Rotation = Rotation(theta=0, phi=0, psi=0)
+    """Local rotation of the element."""
+
     global_rotation: Rotation = Rotation(theta=0, phi=0, psi=0)
+    """Global rotation of the element."""
+
     error: ElementError = ElementError()
+    """Position errors in the element."""
+
     survey: ElementSurvey = ElementSurvey()
+    """Survey positions of the element."""
+
     length: float = 0.0
+    """Length of the element."""
+
     physical_angle: float = 0.0
+    """Physical angle"""
 
     def __str__(self):
         cls = self.__class__
@@ -204,7 +238,7 @@ class PhysicalElement(IgnoreExtra):
 
     @field_validator("middle", "datum", mode="before")
     @classmethod
-    def validate_middle(cls, v: Union[float, int, List, np.ndarray]) -> Position:
+    def validate_middle(cls, v: Union[float, int, Dict, List, np.ndarray]) -> Position:
         if isinstance(v, (float, int)):
             return Position(z=v)
         elif isinstance(v, (list, tuple, np.ndarray)):
@@ -246,19 +280,48 @@ class PhysicalElement(IgnoreExtra):
                 raise ValueError("setting rotation as dictionary must include x, y, z as floats")
 
         else:
-            raise ValueError("middle should be a number or a list of floats")
+            raise ValueError("rotation should be a number or a list of floats")
 
     @property
-    def rotation_matrix(self) -> List[Union[int, float]]:
+    def rotation_matrix(self) -> np.ndarray:
+        """
+        Get the rotation matrix of the element based on `rotation.theta` + `global_rotation.theta`.
+
+        Returns
+        -------
+        np.ndarray
+            Rotation matrix
+        """
         return _rotation_matrix(self.rotation.theta + self.global_rotation.theta)
 
     def rotated_position(
         self, vec: List[Union[int, float]] = [0, 0, 0]
     ) -> List[Union[int, float]]:
+        """
+        Get the rotated position of the element  based on the dot product of `vec` with its :attr:`~rotation_matrix`.
+
+        Parameters
+        ----------
+        vec: List[float]
+            Vector by which to rotate the element
+
+        Returns
+        -------
+        List[float]
+            Dot product of `vec` with :attr:`~rotation_matrix`.
+        """
         return np.dot(np.array(vec), self.rotation_matrix)
 
     @property
     def start(self) -> Position:
+        """
+        Start position of the element.
+
+        Returns
+        -------
+        :class:`~nala.models.physical.Position
+            Start position of the element.
+        """
         middle = np.array(self.middle.array)
         sx = 0
         sy = 0
@@ -273,6 +336,14 @@ class PhysicalElement(IgnoreExtra):
 
     @property
     def end(self) -> Position:
+        """
+        End position of the element.
+
+        Returns
+        -------
+        :class:`~nala.models.physical.Position
+            End position of the element.
+        """
         ex = (
             (self.length * (1 - np.cos(self.physical_angle))) / self.physical_angle
             if abs(self.physical_angle) > 1e-9

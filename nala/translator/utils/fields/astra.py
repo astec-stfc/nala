@@ -10,7 +10,7 @@ d = ",!?/&-:;@'\n \t"
 def generate_astra_field_data(self) -> np.ndarray:
     """
     Generate the field data in a format that is suitable for ASTRA, based on the
-    :class:`~SimulationFramework.Modules.Fields.field` object provided.
+    :class:`~nala.translator.utils.fields.field` object provided.
     The `field_type` parameter determines the format of the file.
     See the `ASTRA manual`_ for more details.
 
@@ -20,7 +20,7 @@ def generate_astra_field_data(self) -> np.ndarray:
 
     Parameters
     ----------
-    self: :class:`~SimulationFramework.Modules.Fields.field`
+    self: :class:`~nala.translator.utils.fields.field`
         The field object
 
     Returns

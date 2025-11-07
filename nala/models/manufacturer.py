@@ -7,7 +7,11 @@ class ManufacturerElement(IgnoreExtra):
     """Manufacturer info model."""
 
     manufacturer: str = ""
+    """Name of manufacturer."""
+
     serial_number: str = ""
+    """Serieal number of element."""
+
     hardware_class: str = Field(alias="hardware_type", default="")
 
     @field_validator("serial_number", mode="before")
