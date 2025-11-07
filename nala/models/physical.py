@@ -1,6 +1,6 @@
 import numpy as np
 from pydantic import field_validator, confloat, Field, AliasChoices
-from typing import List, Type, Union
+from typing import List, Type, Union, Dict
 
 from ._functions import _rotation_matrix
 
@@ -118,21 +118,39 @@ class ElementError(IgnoreExtra):
 
     @field_validator("position", mode="before")
     @classmethod
-    def validate_position(cls, v: Union[Position, List, np.ndarray]) -> Position:
+    def validate_position(cls, v: Union[Position, Dict, List, np.ndarray]) -> Position:
         if isinstance(v, (list, tuple, np.ndarray)) and len(v) == 3:
             return Position(x=v[0], y=v[1], z=v[2])
         elif isinstance(v, Position):
             return v
+        elif isinstance(v, dict):
+            keys = list(v.keys())
+            values = list(v.values())
+            if all([x in keys for x in ["x", "y", "z"]]) and all([type(val) == float for val in values]) and len(
+                    keys) == 3:
+                return Position(**v)
+            else:
+                raise ValueError("setting middle as dictionary must include x, y, z as floats")
+
         else:
             raise ValueError("position should be a number or a list of floats")
 
     @field_validator("rotation", mode="before")
     @classmethod
-    def validate_rotation(cls, v: Union[Rotation, List, np.ndarray]) -> Rotation:
+    def validate_rotation(cls, v: Union[Rotation, Dict, List, np.ndarray]) -> Rotation:
         if isinstance(v, (list, tuple, np.ndarray)) and len(v) == 3:
             return Rotation(theta=v[0], phi=v[1], psi=v[2])
         elif isinstance(v, Rotation):
             return v
+        elif isinstance(v, dict):
+            keys = list(v.keys())
+            values = list(v.values())
+            if all([x in keys for x in ["phi", "psi", "theta"]]) and all(
+                    [type(val) == float for val in values]) and len(keys) == 3:
+                return Rotation(**v)
+            else:
+                raise ValueError("setting rotation as dictionary must include x, y, z as floats")
+
         else:
             raise ValueError("rotation should be a number or a list of floats")
 
@@ -190,7 +208,8 @@ class PhysicalElement(IgnoreExtra):
     length: float = 0.0
     """Length of the element."""
 
-    angle: float = 0.0
+    physical_angle: float = 0.0
+    """Physical angle"""
 
     def __str__(self):
         cls = self.__class__
@@ -219,7 +238,7 @@ class PhysicalElement(IgnoreExtra):
 
     @field_validator("middle", "datum", mode="before")
     @classmethod
-    def validate_middle(cls, v: Union[float, int, dict, List, np.ndarray]) -> Position:
+    def validate_middle(cls, v: Union[float, int, Dict, List, np.ndarray]) -> Position:
         if isinstance(v, (float, int)):
             return Position(z=v)
         elif isinstance(v, (list, tuple, np.ndarray)):
@@ -237,6 +256,7 @@ class PhysicalElement(IgnoreExtra):
                 return Position(**v)
             else:
                 raise ValueError("setting middle as dictionary must include x, y, z as floats")
+
         else:
             raise ValueError("middle should be a number or a list of floats")
 
@@ -258,6 +278,7 @@ class PhysicalElement(IgnoreExtra):
                 return Rotation(**v)
             else:
                 raise ValueError("setting rotation as dictionary must include x, y, z as floats")
+
         else:
             raise ValueError("rotation should be a number or a list of floats")
 
@@ -305,8 +326,8 @@ class PhysicalElement(IgnoreExtra):
         sx = 0
         sy = 0
         sz = (
-            1.0 * self.length * np.tan(0.5 * self.angle) / self.angle
-            if hasattr(self, "angle") and abs(self.angle) > 1e-9
+            1.0 * self.length * np.tan(0.5 * self.physical_angle) / self.physical_angle
+            if abs(self.physical_angle) > 1e-9
             else 1.0 * self.length / 2.0
         )
         vec = [sx, sy, sz]
@@ -324,14 +345,14 @@ class PhysicalElement(IgnoreExtra):
             End position of the element.
         """
         ex = (
-            (self.length * (1 - np.cos(self.angle))) / self.angle
-            if hasattr(self, "angle") and abs(self.angle) > 1e-9
+            (self.length * (1 - np.cos(self.physical_angle))) / self.physical_angle
+            if abs(self.physical_angle) > 1e-9
             else 0
         )
         ey = 0
         ez = (
-            (self.length * (np.sin(self.angle))) / self.angle
-            if hasattr(self, "angle") and abs(self.angle) > 1e-9
+            (self.length * (np.sin(self.physical_angle))) / self.physical_angle
+            if abs(self.physical_angle) > 1e-9
             else self.length
         )
         vec = [ex, ey, ez]

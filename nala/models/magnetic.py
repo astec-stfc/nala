@@ -463,14 +463,6 @@ class MagneticElement(IgnoreExtra):
             getattr(self.multipoles, "K" + str(self.order) + "L"), "order", self.order
         )
 
-    @property
-    def angle(self) -> float:
-        return self.KnL(order=0)
-
-    @angle.setter
-    def angle(self, value: float) -> None:
-        self.multipoles.K0L.normal = value
-
     @computed_field
     @property
     def half_gap(self) -> float:
@@ -497,6 +489,14 @@ class Dipole_Magnet(MagneticElement):
 
     order: int = Field(repr=False, default=0, frozen=True)
     """Magnetic order of the dipole."""
+
+    @property
+    def angle(self) -> float:
+        return self.KnL(order=0)
+
+    @angle.setter
+    def angle(self, value: float) -> None:
+        self.multipoles.K0L.normal = value
 
     @computed_field
     @property

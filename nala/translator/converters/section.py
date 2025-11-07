@@ -1,6 +1,7 @@
 from typing import Dict, Any
 from warnings import warn
 import numpy as np
+from pydantic import PositiveInt
 
 from ...models.elementList import SectionLattice
 from ...models.RF import WakefieldElement
@@ -41,6 +42,15 @@ class SectionLatticeTranslator(SectionLattice):
     
     WARNING: OPAL not fully benchmarked / tested.
     """
+
+    csr_enable: bool = True
+    """Flag to enable calculation of CSR in drifts."""
+
+    lsc_enable: bool = True
+    """Flag to enable calculation of LSC in drifts."""
+
+    lsc_bins: PositiveInt = 20
+    """Number of LSC bins for drifts."""
 
     @classmethod
     def from_section(cls, section: SectionLattice) -> "SectionLatticeTranslator":
@@ -304,7 +314,11 @@ class SectionLatticeTranslator(SectionLattice):
         str
             An ELEGANT-compatible lattice file.
         """
-        section_with_drifts = self.createDrifts()
+        section_with_drifts = self.createDrifts(
+            csr_enable=self.csr_enable,
+            lsc_enable=self.lsc_enable,
+            lsc_bins=self.lsc_bins,
+        )
         elem_dict = translate_elements(
             section_with_drifts.values(),
             master_lattice_location=self.master_lattice_location,

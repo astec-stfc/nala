@@ -143,6 +143,9 @@ class baseElement(IgnoreExtra):
     """Flag to indicate whether the element is a subelement of another 
     (i.e. whether they overlap in physical space)."""
 
+    # Define cascading rules: (source_path, target_path)
+    CASCADING_RULES: Dict = {}
+
     @field_validator("name", mode="before")
     @classmethod
     def validate_name(cls, v: str) -> str:
@@ -289,7 +292,7 @@ class baseElement(IgnoreExtra):
 
     def __setattr__(self, name: str, value: Any) -> None:
         """
-        Custom setter: Looks for the attribute in nested models and sets the value.
+        Custom setter with cascading updates for related attributes.
         """
         cls = self.__class__
 
@@ -298,11 +301,10 @@ class baseElement(IgnoreExtra):
             super().__setattr__(name, value)
             return
 
-        # Try to find in nested models
+        # Try nested lookup
         try:
             paths = self._resolve_attribute_path(name)
         except Exception:
-            # If lookup fails, fall back to normal behavior
             super().__setattr__(name, value)
             return
 
@@ -314,10 +316,23 @@ class baseElement(IgnoreExtra):
             path_strings = [f"'{'.'.join(p)}'" for p in paths]
             raise AttributeError(
                 f"Cannot set ambiguous attribute '{name}'. Found at: {', '.join(path_strings)}. "
-                "Set explicitly (e.g., `element.simulation.field_amplitude = value`)."
+                "Set explicitly."
             )
 
+        # Set the nested attribute
         self._set_nested_attribute(paths[0], value)
+
+        # Handle cascading updates
+        self._handle_cascading_updates(paths[0], value)
+
+    def _handle_cascading_updates(self, path: Tuple[str, ...], value: Any) -> None:
+        """
+        Handle cascading attribute updates across nested models.
+        """
+
+        for source_path, target_path in self.CASCADING_RULES.items():
+            if path == source_path:
+                self._set_nested_attribute(target_path, value)
 
     def to_CATAP(self) -> dict:
         return {
@@ -571,6 +586,11 @@ class Dipole(Magnet):
     magnetic: Dipole_Magnet = Field(default_factory=Dipole_Magnet)
     """Magnetic attributes of the dipole."""
 
+    # Define cascading rules: (source_path, target_path)
+    CASCADING_RULES: Dict = {
+        ("magnetic", "angle"): ("physical", "physical_angle"),
+    }
+
 
 class Quadrupole(Magnet):
     """
@@ -717,7 +737,7 @@ class Wiggler(Magnet):
     """Laser attached to the wiggler."""
 
 
-class TwissMatch(Magnet):
+class TwissMatch(Element):
     """
     Twiss matching element. Used for changing the Twiss parameters of the beam.
 
