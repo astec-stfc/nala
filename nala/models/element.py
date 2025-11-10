@@ -14,6 +14,7 @@ from .manufacturer import ManufacturerElement
 from .electrical import ElectricalElement
 from .degauss import DegaussableElement
 from .physical import PhysicalElement, Rotation
+from .reference import ReferenceElement
 from .magnetic import (
     MagneticElement,
     Dipole_Magnet,
@@ -116,9 +117,6 @@ class baseElement(IgnoreExtra):
         virtual_name (str): The virtual name of the element.
         alias (Aliases): The alias(es) of the element.
         subelement (bool | str): Whether the element is a subelement.
-        electrical: :class:`~nala.models.electrical.ElectricalElement`: The electrical attributes of the element.
-        manufacturer: :class:`~nala.models.manufacturer.Manufacturer`: The manufacturer attributes of the element.
-        controls: :class:`~nala.models.control.ControlsInformation` | None: The control system attributes of the element.
     """
 
     name: str
@@ -145,15 +143,6 @@ class baseElement(IgnoreExtra):
     subelement: bool | str = False
     """Flag to indicate whether the element is a subelement of another 
     (i.e. whether they overlap in physical space)."""
-
-    electrical: ElectricalElement | None = Field(default_factory=ElectricalElement)
-    """Electrical attributes of the element."""
-
-    manufacturer: ManufacturerElement | None = Field(default_factory=ManufacturerElement)
-    """Manufacturer attributes of the element."""
-
-    controls: ControlsInformation | None = None
-    """Control system attributes of the element."""
 
     @field_validator("name", mode="before")
     @classmethod
@@ -388,7 +377,43 @@ class baseElement(IgnoreExtra):
             return isinstance(self.subelement, str)
 
 
-class PhysicalBaseElement(baseElement):
+class Element(baseElement):
+    """
+    Standard class for representing elements.
+
+    Attributes:
+        simulation: :class:`~nala.models.simulation.SimulationElement`: The simulation attributes of the element.
+        electrical: :class:`~nala.models.electrical.ElectricalElement`: The electrical attributes of the element.
+        manufacturer: :class:`~nala.models.manufacturer.Manufacturer`: The manufacturer attributes of the element.
+        controls: :class:`~nala.models.control.ControlsInformation` | None: The control system attributes of the element.
+    """
+
+    simulation: SimulationElement = Field(default_factory=SimulationElement)
+    """Simulation attributes of the element."""
+
+    electrical: ElectricalElement | None = Field(default_factory=ElectricalElement)
+    """Electrical attributes of the element."""
+
+    manufacturer: ManufacturerElement | None = Field(default_factory=ManufacturerElement)
+    """Manufacturer attributes of the element."""
+
+    controls: ControlsInformation | None = None
+    """Control system attributes of the element."""
+
+    reference: ReferenceElement | None = None
+    """Additional reference information for the element."""
+
+    def to_CATAP(self):
+        catap_dict = super().to_CATAP()
+        catap_dict.update(
+            {
+                "manufacturer": self.manufacturer.manufacturer,
+                "serial_number": self.manufacturer.serial_number,
+            }
+        )
+        return catap_dict
+
+class PhysicalBaseElement(Element):
     """
     Element with a physical attribute; see :class:`~nala.models.physical.PhysicalElement`.
 
@@ -430,29 +455,8 @@ class PhysicalBaseElement(baseElement):
         return self.start_angle
 
 
-class Element(PhysicalBaseElement):
-    """
-    Standard class for representing elements.
 
-    Attributes:
-        simulation: :class:`~nala.models.simulation.SimulationElement`: The simulation attributes of the element.
-    """
-
-    simulation: SimulationElement = Field(default_factory=SimulationElement)
-    """Simulation attributes of the element."""
-
-    def to_CATAP(self):
-        catap_dict = super().to_CATAP()
-        catap_dict.update(
-            {
-                "manufacturer": self.manufacturer.manufacturer,
-                "serial_number": self.manufacturer.serial_number,
-            }
-        )
-        return catap_dict
-
-
-class Magnet(Element):
+class Magnet(PhysicalBaseElement):
     """
     Base class for representing magnets.
 
@@ -651,7 +655,7 @@ class Wiggler(Magnet):
     laser: LaserElement | None = None
 
 
-class TwissMatch(Element):
+class TwissMatch(PhysicalBaseElement):
     """
     Twiss matching element. Used for changing the Twiss parameters of the beam.
 
@@ -667,7 +671,7 @@ class TwissMatch(Element):
     simulation: TwissMatchSimulationElement = Field(default_factory=TwissMatchSimulationElement)
 
 
-class Diagnostic(Element):
+class Diagnostic(PhysicalBaseElement):
     """
     Base class for representing diagnostics.
 
@@ -822,7 +826,7 @@ class Integrated_Current_Transformer(ChargeDiagnostic):
     hardware_type: str = Field(default="Integrated_Current_Transformer", frozen=True, alias="ICT")
 
 
-class VacuumGauge(Element):
+class VacuumGauge(PhysicalBaseElement):
     """
     Vacuum gauge element.
 
@@ -835,7 +839,7 @@ class VacuumGauge(Element):
     hardware_model: str = Field(default="IMG", frozen=True)
 
 
-class Laser(Element):
+class Laser(PhysicalBaseElement):
     """
     Laser element.
 
@@ -898,7 +902,7 @@ class LaserMirror(Element):
     laser: LaserMirrorElement = Field(default_factory=LaserMirrorElement)
 
 
-class Plasma(Element):
+class Plasma(PhysicalBaseElement):
     """
     Plasma element.
 
@@ -916,7 +920,7 @@ class Plasma(Element):
     laser: LaserElement | None = None
 
 
-class Lighting(baseElement):
+class Lighting(Element):
     """Lighting element."""
 
     hardware_type: str = Field(default="Lighting", frozen=True)
@@ -924,7 +928,7 @@ class Lighting(baseElement):
     lights: LightingElement = Field(default_factory=LightingElement)
 
 
-class PID(baseElement):
+class PID(Element):
     """PID element."""
 
     hardware_type: str = Field(default="PID", frozen=True)
@@ -932,7 +936,7 @@ class PID(baseElement):
     PID: PIDElement = Field(default_factory=PIDElement)
 
 
-class Low_Level_RF(baseElement):
+class Low_Level_RF(Element):
     """LLRF element."""
 
     hardware_type: str = Field(default="Low_Level_RF", frozen=True)
@@ -940,7 +944,7 @@ class Low_Level_RF(baseElement):
     LLRF: Low_Level_RF_Element = Field(default_factory=Low_Level_RF_Element)
 
 
-class RFCavity(Element):
+class RFCavity(PhysicalBaseElement):
     """
     RFCavity element.
 
@@ -994,7 +998,7 @@ class RFDeflectingCavity(RFCavity):
     simulation: RFCavitySimulationElement = Field(default_factory=RFCavitySimulationElement)
 
 
-class RFModulator(baseElement):
+class RFModulator(Element):
     """
     RF Modulator element.
 
@@ -1009,7 +1013,7 @@ class RFModulator(baseElement):
     modulator: RFModulatorElement = Field(default_factory=RFModulatorElement)
 
 
-class RFProtection(baseElement):
+class RFProtection(Element):
     """
     RF Protection element.
 
@@ -1024,7 +1028,7 @@ class RFProtection(baseElement):
     modulator: RFProtectionElement = Field(default_factory=RFProtectionElement)
 
 
-class RFHeartbeat(baseElement):
+class RFHeartbeat(Element):
     """
     RF Heartbeat element.
 
@@ -1037,7 +1041,7 @@ class RFHeartbeat(baseElement):
     heartbeat: RFHeartbeatElement = Field(default_factory=RFHeartbeatElement)
 
 
-class Shutter(Element):
+class Shutter(PhysicalBaseElement):
     """
     Shutter element.
 
@@ -1050,7 +1054,7 @@ class Shutter(Element):
     shutter: ShutterElement = Field(default_factory=ShutterElement)
 
 
-class Valve(Element):
+class Valve(PhysicalBaseElement):
     """
     Vacuum valve element.
 

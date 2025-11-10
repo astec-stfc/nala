@@ -1,5 +1,4 @@
-from pydantic import Field, field_validator
-from typing import Any
+from pydantic import field_validator
 from .baseModels import IgnoreExtra
 
 
@@ -7,8 +6,10 @@ class ManufacturerElement(IgnoreExtra):
     """Manufacturer info model."""
 
     manufacturer: str = ""
+    """Name of manufacturer."""
+
     serial_number: str = ""
-    hardware_class: str = Field(alias="hardware_type", default="")
+    """Serial number of element."""
 
     @field_validator("serial_number", mode="before")
     @classmethod
