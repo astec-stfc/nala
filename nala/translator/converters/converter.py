@@ -40,6 +40,24 @@ def translate_elements(
         master_lattice_location: str = None,
         directory: str = '.',
 ) -> Dict[str, BaseElementTranslator]:
+    """
+    Function for translating a list of elements into their respective Translator classes.
+
+    Parameters
+    ----------
+    elements: List[Element]
+        List of :class:`~nala.models.element.Element` objects.
+    master_lattice_location: str
+        Directory containing lattice/data files including field/wakefield files.
+    directory:
+        Directory to which files will be written.
+
+    Returns
+    -------
+    Dict[str, BaseElementTranslator]
+        Dictionary of :class:`~nala.translator.converters.base.BaseElementTranslator` objects, keyed
+        by their original name.
+    """
     elem_dict = {}
     for elem in elements:
         if isinstance(elem, Magnet):

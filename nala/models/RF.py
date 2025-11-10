@@ -5,19 +5,56 @@ from .baseModels import IgnoreExtra, T, ModelBase
 
 
 class RFCavityElement(IgnoreExtra):
+    """
+    RF Cavity model.
+    """
+
     structure_Type: str = "StandingWave"
+    """Type of RF structure
+    #TODO make this literal.
+    """
+
     attenuation_constant: float = 0
+    """Attenuation constant associated with the cavity."""
+
     cell_length: float = 0.0333333333333333
+    """Length of cavity cell [m]."""
+
     coupling_cell_length: float | None = 0.0
+    """Length of coupling cell [m]."""
+
     design_gamma: Union[float, None] = None
+    """Design relativistic Lorentz factor for particles in the cavity."""
+
     design_power: float = 25000000
+    """
+    Design power of the cavity [W].
+    #TODO max/min/other?
+    """
+
     frequency: float = 2998500000.0
+    """RF frequency [Hz]."""
+
     n_cells: Union[int, float] = 1
+    """Number of cavity cells."""
+
     crest: float = 0
+    """Crest phase [deg] -- crest is zero."""
+
     phase: float = 0.0
+    """Off-crest phase [deg]."""
+
     shunt_impedance: Union[float, None] = None
+    """Shunt impedance."""
+
     mode_numerator: float | None = None
+    """Numerator of travelling wave mode."""
+
     mode_denominator: float | None = None
+    """
+    Denominator of travelling wave mode.
+    #TODO combine with numerator to make it the actual mode?
+    """
 
     def model_post_init(self, __context):
         if self.structure_Type.lower == "travellingwave" and any(
@@ -26,20 +63,50 @@ class RFCavityElement(IgnoreExtra):
 
 
 class WakefieldElement(IgnoreExtra):
+    """
+    Wakefield element model.
+    """
+
     cell_length: float = 0.0333333333333333
+    """Length of cavity cell (if the wakefield is associated with a cavity; if not, just make this the
+    length of the wakefield element."""
+
     n_cells: Union[int, float] = 1
+    """Number of cavity cells (if the wakefield is associated with a cavity; if not, just make this 1."""
+
     coupling_cell_length: float | None  = 0.0
 
 
 class RFDeflectingCavityElement(IgnoreExtra):
+    """
+    RF deflecting cavity model.
+    """
     coupling_cell_length: float | None = 0.0
+    """Length of coupling cell [m]."""
+
     design_gamma: Union[float, None] = None
+    """Design relativistic Lorentz factor for particles in the cavity."""
+
     design_power: float = 25000000
+    """
+    Design power of the cavity [W].
+    #TODO max/min/other?
+    """
+
     frequency: float = 2998500000.0
+    """RF frequency [Hz]."""
+
     crest: float = 0
-    phase: float = 90
+    """Crest phase [deg] -- crest is zero."""
+
+    phase: float = 0.0
+    """Off-crest phase [deg]."""
+
     n_cells: Union[int, float] = 1
+    """Number of cavity cells."""
+
     cell_length: float = 0.0333333333333333
+    """Cavity cell length [m]."""
 
 
 class PIDPhaseRange(IgnoreExtra):

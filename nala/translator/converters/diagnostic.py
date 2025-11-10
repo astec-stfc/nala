@@ -2,11 +2,27 @@ from .base import BaseElementTranslator
 from nala.models.simulation import DiagnosticSimulationElement
 
 class DiagnosticTranslator(BaseElementTranslator):
+    """
+    Translator class for converting a :class:`~nala.models.element.Diagnostic` element instance into a string or
+    object that can be understood by various simulation codes.
+    """
+
     simulation: DiagnosticSimulationElement
+    """Diagnostic simulation element"""
 
     directory: str = ""
+    """Directory to which files will be written."""
 
     def to_elegant(self) -> str:
+        """
+        Generates a string representation of the object's properties in the Elegant format.
+        The `element.simulation.output_filename` parameter will be updated to include an `.SDDS` suffix.
+
+        Returns
+        -------
+        str
+            A formatted string representing the object's properties in Elegant format.
+        """
         self.start_write()
         if not self.simulation.output_filename:
             self.simulation.output_filename = f"\"{self.directory}/{self.name}.SDDS\""

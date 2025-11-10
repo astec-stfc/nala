@@ -11,15 +11,25 @@ from ..converters import (
 )
 
 class RFCavityTranslator(BaseElementTranslator):
+    """
+    Translator class for converting a :class:`~nala.models.element.RFCavity` element instance into a string or
+    object that can be understood by various simulation codes.
+    """
+
     cavity: RFCavityElement
+    """Cavity element."""
 
     simulation: RFCavitySimulationElement
+    """Cavity simulation element"""
 
     wakefile: str = None
+    """Name of wakefile associated with the cavity."""
 
     trwakefile: str = None
+    """Name of transverse wakefile associated with the cavity."""
 
     zwakefile: str = None
+    """Name of longitudinal wakefile associated with the cavity."""
 
     @computed_field
     @property
@@ -464,6 +474,23 @@ class RFCavityTranslator(BaseElementTranslator):
         return cells
 
     def to_gpt(self, Brho: float=0.0, ccs: str = "wcs", *args, **kwargs) -> str:
+        """
+        Write a string representation of the cavity for GPT
+
+        #TODO note that not all possible ways of writing a cavity in GPT are currently supported.
+
+        Parameters
+        ----------
+        Brho: float
+            Magnetic rigidity; not used
+        ccs: str
+            Name of co-ordinate system of the cavity
+
+        Returns
+        -------
+        str
+            String representation of the cavity for GPT.
+        """
         self.start_write()
         field_ref_pos = self.get_field_reference_position()
         ccs_label, value_text = self.ccs.ccs_text(field_ref_pos, self.physical.rotation.model_dump())

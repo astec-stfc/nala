@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from typing import List, Dict, Any, Union
-from pydantic import field_validator, BaseModel, ValidationInfo, Field
+from pydantic import field_validator, BaseModel, ValidationInfo, Field, PositiveInt
 from warnings import warn
 from ._functions import read_yaml, merge_two_dicts
 from .element import baseElement, Drift, PhysicalBaseElement
@@ -9,6 +9,9 @@ from .physical import PhysicalElement, Position
 from .baseModels import ModelBase
 from .exceptions import LatticeError
 import warnings
+
+from .simulation import DriftSimulationElement
+
 
 def dot(a, b) -> float:
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
@@ -20,9 +23,20 @@ def chunks(li, n):
         yield li[i: i + n]
 
 class BaseLatticeModel(ModelBase):
+    """
+    Base-level description for defining lattices. Allows dynamic extensibility via `append`, `remove` functions.
+
+    This class should not be used for creating lattices from scratch; rather, use
+    `nala.models.elementList.SectionLattice`, `nala.models.elementList.MachineLayout`.
+    """
+
     name: str
+    """Name of lattice model."""
+
     _basename: str
+
     master_lattice_location: str | None = None
+    """Top-level directory containing lattice files."""
 
     def __add__(self, other: dict) -> dict:
         copy = getattr(self, self._basename).copy()
@@ -61,7 +75,10 @@ class BaseLatticeModel(ModelBase):
 
 
 class ElementList(ModelBase):
-    elements: Dict[str, Union[BaseModel, None]]
+    """
+    A container for an unordered dictionary of :class:`~nala.models.element.baseElement`.
+    """
+    elements: Dict[str, Union[baseElement, None]]
 
     def __str__(self):
         return str([e.name for e in self.elements.values()])
@@ -73,7 +90,7 @@ class ElementList(ModelBase):
     def names(self) -> list:
         return [e.name for e in self.elements.values()]
 
-    def index(self, element: Union[str, BaseModel]):
+    def index(self, element: Union[str, baseElement]):
         if isinstance(element, str):
             return list(self.elements.keys()).index(element)
         return list(self.elements.values()).index(element)
@@ -92,7 +109,7 @@ class ElementList(ModelBase):
             return super().__getattr__(a)
         except Exception:
             data = self._get_attributes_or_none(a)
-            if all([isinstance(d, (Union[BaseModel, None])) for d in data.values()]):
+            if all([isinstance(d, (Union[baseElement, None])) for d in data.values()]):
                 return ElementList(elements=data)
             return data
 
@@ -101,9 +118,19 @@ class ElementList(ModelBase):
 
 
 class SectionLattice(BaseLatticeModel):
+    """
+    A section of a lattice, consisting of a list of elements and their order along the beam path.
+    """
+
     order: List[str]
+    """Ordered list of element names."""
+
     elements: ElementList = Field(default_factory=ElementList)
+    """Container for elements."""
+
     # other_elements: ElementList = ElementList(elements={})
+    # TODO should we put this back in?
+
     _basename: str = "elements"
 
     @field_validator("elements", mode="before")
@@ -132,7 +159,14 @@ class SectionLattice(BaseLatticeModel):
     #     return data
 
     @property
-    def names(self) -> list:
+    def names(self) -> List:
+        """List of element names.
+
+        Returns
+        -------
+        List
+            List of element names.
+        """
         return self.elements.names
 
     def __str__(self):
@@ -150,10 +184,18 @@ class SectionLattice(BaseLatticeModel):
         except Exception:
             return getattr(self.elements, a)
 
-    def _get_all_elements(self) -> ElementList:
+    def _get_all_elements(self) -> List:
+        """
+        Get a list of all the elements in order.
+
+        Returns
+        -------
+        List
+            Ordered list of elements.
+        """
         return [self.elements[e] for e in self.order if e in self.elements.names]
 
-    def createDrifts(self):
+    def createDrifts(self, csr_enable: bool=True, lsc_enable: bool=True, lsc_bins: PositiveInt=20):
         """Insert drifts into a sequence of 'elements'"""
         positions = []
         originalelements = dict()
@@ -213,6 +255,11 @@ class SectionLattice(BaseLatticeModel):
                             middle=Position(x=x, y=y, z=z),
                             datum=Position(x=x, y=y, z=z),
                         ),
+                        simulation=DriftSimulationElement(
+                            csr_enable=csr_enable,
+                            lsc_enable=lsc_enable,
+                            lsc_bins=lsc_bins,
+                        )
                     )
                     newelements[name] = newdrift
         return newelements
@@ -257,8 +304,17 @@ class SectionLattice(BaseLatticeModel):
 
 
 class MachineLayout(BaseLatticeModel):
+    """
+    A machine layout, consisting of a dictionary of lattice sections.
+    This class could represent a full beam path, for example.
+    """
+
     sections: Dict[str, SectionLattice]  # = Field(frozen=True)
+    """Dictionary of :class:`~nala.models.elementList.SectionLattice`, keyed by name."""
+
     master_lattice_location: str | None = None
+    """Directory containing lattice files. """
+
     _basename: str = "sections"
 
     def model_post_init(self, __context):
@@ -286,7 +342,15 @@ class MachineLayout(BaseLatticeModel):
             self._all_elements = {}
 
     @property
-    def names(self):
+    def names(self) -> List:
+        """
+        Names of lattice sections
+
+        Returns
+        -------
+        List
+            Names of :attr:`~sections`
+        """
         return list(self.sections.keys())
 
     def __str__(self):
@@ -298,10 +362,26 @@ class MachineLayout(BaseLatticeModel):
     def __getitem__(self, item: str) -> int:
         return self.sections[item]
 
-    def _get_all_elements(self) -> list:
+    def _get_all_elements(self) -> List[baseElement]:
+        """
+        List of all elements defined in the layout
+
+        Returns
+        -------
+        List[baseElement]
+            List of all elements.
+        """
         return self._all_elements
 
-    def _get_all_element_names(self) -> list:
+    def _get_all_element_names(self) -> List[str]:
+        """
+        List of all element names defined in the layout.
+
+        Returns
+        -------
+        List[str]
+            Names of all elements.
+        """
         return [e.name for e in self._get_all_elements()]
 
     def get_element(self, name: str) -> baseElement:
@@ -309,7 +389,7 @@ class MachineLayout(BaseLatticeModel):
         Return the LatticeElement object corresponding to a given machine element
 
         :param str name: Name of the element to look up
-        :returns: LatticeElement instance for that element
+        :returns: :class:`~nala.models.element.baseElement` instance for that element
         """
         if name in self._get_all_element_names():
             index = self._get_all_element_names().index(name)
@@ -342,16 +422,24 @@ class MachineLayout(BaseLatticeModel):
             raise LatticeError(message)
 
     @property
-    def elements(self):
+    def elements(self) -> List[str]:
+        """
+        List of all element names.
+
+        Returns
+        -------
+        List[str]
+            List of all element names.
+        """
         return self._get_all_element_names()
 
-    def _filter_element_list(self, result, filter, attrib):
-        if isinstance(filter, (str, list)):
+    def _filter_element_list(self, result, filt, attrib):
+        if isinstance(filt, (str, list)):
             # make list of valid types
-            if isinstance(filter, str):
-                filter_list = [filter.lower()]
-            elif isinstance(filter, list):
-                filter_list = [_type.lower() for _type in filter]
+            if isinstance(filt, str):
+                filter_list = [filt.lower()]
+            elif isinstance(filt, list):
+                filter_list = [_type.lower() for _type in filt]
             # apply search criteria
             return [
                 ele
@@ -368,6 +456,24 @@ class MachineLayout(BaseLatticeModel):
         element_model: Union[str, list, None] = None,
         element_class: Union[str, list, None] = None,
     ) -> List[str]:
+        """
+        Get all elements in the lattice, or filter them by type/model/class
+        # TODO function name implies this returns elements rather than names; rename?
+
+        Parameters
+        ----------
+        element_type: str | list | None
+            Filter by element type; if list, gather multiple types; if None, gather all.
+        element_model: str | list | None
+            Filter by element model; if list, gather multiple models; if None, gather all.
+        element_class
+            Filter by element hardware class; if list, gather multiple classes; if None, gather all.
+
+        Returns
+        -------
+        List[str]
+            Filtered names of elements.
+        """
         return self.elements_between(
             end=None,
             start=None,
@@ -386,13 +492,26 @@ class MachineLayout(BaseLatticeModel):
     ) -> List[str]:
         """
         Returns a list of all lattice elements (of a specified type) between
-        any two points along the accelerator. Elements are ordered according
+        any two points along the accelerator (inclusive). Elements are ordered according
         to their longitudinal position along the beam path.
 
-        :param str end: Name of the element defining the end of the search region
-        :param str start: Name of the element defining the start of the search region
-        :param str | list type: Type(s) of elements to include in the list
-        :returns: List containing the names of all elements between (and including) *start* and *end*
+        Parameters
+        ----------
+        end: str
+            Name of the element defining the end of the search region
+        start: str
+            Name of the element defining the start of the search region
+        element_type: str | list | None
+            Filter by element type; if list, gather multiple types; if None, gather all.
+        element_model: str | list | None
+            Filter by element model; if list, gather multiple models; if None, gather all.
+        element_class
+            Filter by element hardware class; if list, gather multiple classes; if None, gather all.
+
+        Returns
+        -------
+        List[str]
+            Filtered names of elements.
         """
         # replace blank start and/or end point
         element_names = self._get_all_element_names()
@@ -414,14 +533,37 @@ class MachineLayout(BaseLatticeModel):
 
 
 class MachineModel(ModelBase):
+    """
+    The full model of the accelerator. It describes all :class:`~nala.models.elementList.MachineLayout` and
+    :class:`~nala.models.elementList.SectionLattice` that particles can follow.
+    These layouts and sections are also defined as Dict[str, list] and Dict[str, list], and the full dictionary
+    containing all elements is also accessible.
+    """
+
     layout: str | Dict | None = None
+    """Dictionary containing layout names and the names of the sections of which they are composed."""
+
     section: str | Dict[str, Dict] | None = None
+    """Dictionary containing section names and the elements that compose it."""
+
     elements: Dict[str, baseElement] = {}
+    """Dictionary containing all elements defined in the machine model."""
+
     sections: Dict[str, SectionLattice] = {}
+    """Dictionary containing :class:`~nala.models.elementList.SectionLattice`, keyed by name."""
+
     lattices: Dict[str, MachineLayout] = {}
+    """Dictionary containing :class:`~nala.models.elementList.MachineLayout`, keyed by name.
+    #TODO rationalise either this name `lattices` or the class name `MachineLayout`.
+    """
+
     master_lattice_location: str | None = None
+    """Directory containing lattice YAML files."""
+
     _layouts: List[str] = None
+
     _section_definitions: Dict = {}
+
     _default_path: str = None
 
     @field_validator("layout", mode="before")
@@ -498,7 +640,7 @@ class MachineModel(ModelBase):
         if len(self.elements) > 0:
             if self.section:
                 self._build_layouts(self.elements)
-            if self.section is None:
+            else:
                 self._build_sections_from_elements(self.elements)
 
     def __add__(self, other) -> dict:
@@ -597,17 +739,19 @@ class MachineModel(ModelBase):
                         new_elements = [
                             x
                             for x in elements.values()
-                            if (x.name in self._section_definitions[_area])
+                            if x.name in self._section_definitions[_area]
                         ]
-                        self.sections[_area] = SectionLattice(
-                            name=_area,
-                            elements=new_elements,
-                            order=self._section_definitions[_area],
-                            master_lattice_location=self.master_lattice_location,
-                        )
+                        try:
+                            self.sections[_area] = SectionLattice(
+                                name=_area,
+                                elements=new_elements,
+                                order=self._section_definitions[_area],
+                                master_lattice_location=self.master_lattice_location,
+                            )
+                        except KeyError:
+                            pass
                     else:
                         print("MachineModel", "_build_layouts", _area, "missing")
-
                 self.lattices[path] = MachineLayout(
                     name=path,
                     sections={
@@ -656,6 +800,24 @@ class MachineModel(ModelBase):
         element_model: Union[str, list, None] = None,
         element_class: Union[str, list, None] = None,
     ) -> List[str]:
+        """
+        Get all elements in the lattice, or filter them by type/model/class
+        # TODO function name implies this returns elements rather than names; rename?
+
+        Parameters
+        ----------
+        element_type: str | list | None
+            Filter by element type; if list, gather multiple types; if None, gather all.
+        element_model: str | list | None
+            Filter by element model; if list, gather multiple models; if None, gather all.
+        element_class
+            Filter by element hardware class; if list, gather multiple classes; if None, gather all.
+
+        Returns
+        -------
+        List[str]
+            Filtered names of elements.
+        """
         return self.elements_between(
             end=None,
             start=None,
@@ -674,13 +836,29 @@ class MachineModel(ModelBase):
         path: str = None,
     ) -> List[str]:
         """
-        Returns an ordered list of all lattice elements (of a specific type) between
-        any two points along the accelerator.
+        Returns a list of all lattice elements (of a specified type) between
+        any two points along the accelerator (inclusive). Elements are ordered according
+        to their longitudinal position along the beam path.
 
-        :param str end: Name of the last element. This element is used to determine the beam path.
-        :param str start: Name of the first element.
-        :param str | list type: Type(s) of elements to include in the list
-        :returns: List of all element names between *start* and *end* (inclusive)
+        Parameters
+        ----------
+        end: str
+            Name of the element defining the end of the search region
+        start: str
+            Name of the element defining the start of the search region
+        element_type: str | list | None
+            Filter by element type; if list, gather multiple types; if None, gather all.
+        element_model: str | list | None
+            Filter by element model; if list, gather multiple models; if None, gather all.
+        element_class
+            Filter by element hardware class; if list, gather multiple classes; if None, gather all.
+        path: str
+            Optional beam path, i.e. name of :class:`~nala.models.elementList.MachineLayout`.
+
+        Returns
+        -------
+        List[str]
+            Filtered names of elements.
         """
         # determine the beam path
         if path is None:

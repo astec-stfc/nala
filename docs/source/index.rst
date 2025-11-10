@@ -24,10 +24,11 @@ Architecture
 
 .. toctree::
    :maxdepth: 2
-   
-   Element
-   Auxiliary
-   Magnet
+
+   Architecture/index
+   Translator
+   Examples
+
    
 Participation
 -------------
@@ -46,7 +47,7 @@ We are also happy to help with installation and setting up your accelerator latt
    :maxdepth: 2
    :caption: API
    
-   NALA.models
+   nala.models
 
 Indices and tables
 ==================

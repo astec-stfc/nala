@@ -10,18 +10,18 @@ from ..SDDSFile import SDDSFile, SDDS_Types
 def write_SDDS_field_file(self, sddsindex: int = 0, ascii: bool = False) -> str:
     """
     Generate the field data in a format that is suitable for SDDS, based on the
-    :class:`~SimulationFramework.Modules.Fields.field` object provided.
+    :class:`~nala.translatoru.utils.fields.field` object provided.
     This is then written to an SDDS file.
     The `field_type` parameter determines the format of the file.
 
-    A warning is raised if the field type is not supported (perhaps elevate to a `NotImplementedError`?
+    A warning is raised if the field type is not supported (perhaps elevate to a `NotImplementedError`?)
 
     Parameters
     ----------
-    self: :class:`~SimulationFramework.Modules.Fields.field`
+    self: :class:`~nala.translator.utils.fields.field`
         The field object
     sddsindex: int
-        Must be provided for :class:`~SimulationFramework.Modules.SDDSFile.SddsFile` class
+        Must be provided for :class:`~nala.translator.utils.SDDSFile.SddsFile` class
     ascii: bool, optional
         Convert to ascii?
 
@@ -92,17 +92,17 @@ def write_SDDS_field_file(self, sddsindex: int = 0, ascii: bool = False) -> str:
 
 def read_SDDS_field_file(self, filename: str, field_type: str):
     """
-    Read an SDDS field file and convert it into a :class:`SimulationFramework.Modules.Fields.field` object.
+    Read an SDDS field file and convert it into a :class:`nala.translator.utils.fields.field` object.
     Only works for wakefield files.
 
     Parameters
     ----------
-    self: :class:`~SimulationFramework.Modules.Fields.field`
+    self: :class:`~nala.translator.utils.fields.field`
         The field object to be updated.
     filename: str
         The path to the SDDS field file
     field_type: str
-        The name of the field, see :attr:`~SimulationFramework.Modules.Fields.allowed_fields`
+        The name of the field, see :attr:`~nala.translator.utils.fields.allowed_fields`
 
     Returns
     -------

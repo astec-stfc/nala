@@ -4,7 +4,13 @@ from nala.models.laser import LaserElement
 
 
 class LaserTranslator(BaseElementTranslator):
+    """
+    Translator class for converting a :class:`~nala.models.element.Laser` element instance into a string or
+    object that can be understood by various simulation codes.
+    """
+
     laser: LaserElement
+    """Laser element class."""
 
     supported_pulses: List = [
         'gaussian',
@@ -12,6 +18,7 @@ class LaserTranslator(BaseElementTranslator):
         'flattened-gaussian',
         # 'file'
     ]
+    """Types of laser pulses that can be supported."""
 
     additional_attrs: List = [
         "focal_position",
@@ -19,6 +26,7 @@ class LaserTranslator(BaseElementTranslator):
         "cep_phase",
         "polarization",
     ]
+    """Additional laser attributes."""
 
     def to_wake_t(self) -> Any:
         """

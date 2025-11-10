@@ -51,6 +51,24 @@ def get_git_revision_tags() -> str:
         return None
 
 
+def skip_member(app, what, name, obj, skip, options):
+    if name == "Field":  # or any attribute you find problematic
+        return True
+    return skip
+
+# Prevent sphinx-autodoc-typehints from trying to process pydantic.Field
+def suppress_pydantic_field_signature(app, what, name, obj, options, signature, return_annotation):
+    # Returning (signature, return_annotation) unchanged disables modification
+    return (None, None)
+
+def setup(app):
+    # Keep your skip_member hook
+    app.connect("autodoc-skip-member", skip_member)
+    # Add this to stop autodoc-typehints signature unwrapping
+    app.connect("autodoc-process-signature", suppress_pydantic_field_signature)
+
+
+
 # # use custom theme to set html width
 # def setup(app):
 #     app.add_css_file("my_theme.css")
@@ -72,10 +90,12 @@ version = get_git_revision_hash(short=True) if _git_tags is None else _git_tags
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
-    "sphinx_autodoc_typehints",
     "sphinx.ext.viewcode",
-    "myst_nb",
     "sphinxcontrib.bibtex",
+    "sphinx_autodoc_typehints",
+    #"sphinxcontrib.autodoc_pydantic",
+    "sphinx.ext.mathjax",  # enables math rendering
+    #"myst_nb",
 ]
 
 
@@ -107,13 +127,13 @@ autodoc_pydantic_model_show_json = (
     False  # don't include JSON schema for pydantic models
 )
 autodoc_pydantic_model_show_field_summary = (
-    False  # don't include a bullet-point list of model fields
+    True  # don't include a bullet-point list of model fields
 )
 autodoc_pydantic_model_show_config_summary = (
     False  # don't include model configurations for pydantic models
 )
 autodoc_pydantic_field_list_validators = (
-    False  # don't list validators for pydantic model fields
+    True  # don't list validators for pydantic model fields
 )
 autodoc_pydantic_field_show_constraints = (
     False  # don't list constraints for pydantic model fields
@@ -124,11 +144,15 @@ autodoc_pydantic_model_show_validator_summary = (
 autodoc_pydantic_model_show_validator_members = (
     False  # don't include documentation for validator methods
 )
+autodoc_pydantic_field_doc_policy = "both"  # shows docstrings and Field descriptions
+#autodoc_typehints = "none"
 
 autodoc_mock_imports = [
     #"nala.models.elementList",  # or whichever module fails
     "pydantic",                 # mock dependencies if needed
 ]
+
+numfig = True
 
 
 autodoc_default_options = {
@@ -149,7 +173,8 @@ autodoc_default_options = {
         "dict",
         "json",
     ]),
-    "undoc-members": False,
+    "members": True,
+    "undoc-members": True,
     "inherited-members": False,
 }
 
@@ -161,7 +186,7 @@ autodoc_pydantic_settings_show_config_summary = (
 autodoc_pydantic_field_list_validators = False
 autodoc_pydantic_model_show_validator_members = False
 
-nb_execution_mode = "off"  # options: "off", "auto", "force"
+#nb_execution_mode = "off"  # options: "off", "auto", "force"
 
 
 # mapping to other projects' documentation pages
