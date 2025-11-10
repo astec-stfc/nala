@@ -26,7 +26,8 @@ class ElegantLatticeImporter(BaseModel):
 
     def create_element_dictionary(self):
         params = SDDS_Params(self.params_file)
-        self.elegant_data = params.create_element_dictionary()
+        self.elegant_data, filenames = params.create_element_dictionary()
+        return self.elegant_data, filenames
 
     def update_floor_coordinates(self):
         flr = SDDS_Floor()
@@ -47,7 +48,7 @@ class ElegantLatticeImporter(BaseModel):
                 )
             i += 1
 
-    def create_element_dictionary(self):
+    def create_nala_element_dictionary(self):
         if not self.elegant_data:
             self.create_element_dictionary()
         if not self.floor_data:
@@ -56,34 +57,44 @@ class ElegantLatticeImporter(BaseModel):
 
         for k, v in self.elegant_data.items():
             if k in self.floor_data:
-                if "length" in v:
-                    centre = np.array(self.floor_data[k]["start"]) + np.array([0, 0, v["length"] / 2])
-                else:
-                    centre = np.array(self.floor_data[k]["start"])
                 vtype = v["hardware_type"]
-                v = self._convert_k_to_kl(v)
-                # v = sanitize_kwargs(
-                #     model_cls=getattr(NALA_elements, v["hardware_type"]),
-                #     data=v
-                # )
-                rotation = self.floor_data[k]["start_rotation"]
-                v.update(
-                    {
-                        "physical": {
-                            "middle": centre,
-                            "global_rotation": rotation,
-                        },
-                    }
-                )
-                self.elements.update({k: getattr(NALA_elements, vtype)(**v)})
+                if "drift" not in vtype.lower():
+                    if "l" in v:
+                        if v["hardware_type"].lower() == "dipole":
+                            zpos = (v["l"] / 2) * np.cos(v["angle"])
+                        else:
+                            zpos = v["l"] / 2
+                        centre = np.array(self.floor_data[k]["start"]) + np.array([0, 0, zpos])
+                    else:
+                        centre = np.array(self.floor_data[k]["start"])
+                    v = self._convert_k_to_kl(v)
+                    v = self._convert_ele_phase_to_phase(v)
+                        # v = sanitize_kwargs(
+                        #     model_cls=getattr(NALA_elements, v["hardware_type"]),
+                        #     data=v
+                        # )
+                    rotation = self.floor_data[k]["start_rotation"]
+                    if "physical" in v:
+                        v["physical"].update(
+                            {
+                                "middle": centre,
+                                "global_rotation": rotation,
+                            }
+                        )
+                    else:
+                        v["physical"] = {
+                                "middle": centre,
+                                "global_rotation": rotation,
+                            }
+                    self.elements.update({k: getattr(NALA_elements, vtype)(**v)})
 
     def create_section(self, section: Dict) -> Dict[str, SectionLattice]:
         if not self.elements:
-            self.create_element_dictionary()
+            self.create_nala_element_dictionary()
         secname = list(section.keys())
         assert len(secname) == 1
         secelements = list(section.values())[0]
-        assert len(secelements) == 2
+        assert len(secelements) >= 2
         appending = False
         order = []
         elems = {}
@@ -114,7 +125,8 @@ class ElegantLatticeImporter(BaseModel):
         multi = {}
         if "angle" in v:
             v["k0"] = v["angle"] / float(v["magnetic"]["length"])
-        for n in range(1, 9):
+            v["physical"]["physical_angle"] = -v["angle"]
+        for n in range(0, 9):
             if f"k{n}" in v and ("length" in v["magnetic"] or "length" in v["physical"]):
                 try:
                     knl = float(v[f"k{n}"]) * float(v["magnetic"]["length"])
@@ -124,6 +136,13 @@ class ElegantLatticeImporter(BaseModel):
                 del v[f"k{n}"]
         if "magnetic" in v:
             v["magnetic"].update({"multipoles": multi})
+        return v
+
+    @staticmethod
+    def _convert_ele_phase_to_phase(v) -> dict:
+        if "cavity" in v:
+            if "phase" in v["cavity"]:
+                v["cavity"]["phase"] = (90 - v["cavity"]["phase"])
         return v
 
     @staticmethod

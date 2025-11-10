@@ -117,7 +117,7 @@ class RFCavityTranslator(BaseElementTranslator):
                     and not key == "commandtype"
                     and self._convertKeyword_Elegant(key, updated_type=self.hardware_type) in elements_Elegant[etype]
             ):
-                if value:
+                if value is not None:
                     key = self._convertKeyword_Elegant(key, updated_type=self.hardware_type).lower()
                     # rftmez0 uses frequency instead of freq
                     if etype == "rftmez0" and key == "freq":

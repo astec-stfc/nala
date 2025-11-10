@@ -3,7 +3,7 @@ import numpy as np
 from pydantic import computed_field, Field
 
 from nala.models.physical import PhysicalElement, Position  # noqa E402
-from nala.models.element import flatten, Element
+from nala.models.element import flatten, PhysicalBaseElement
 from typing import Dict, Any
 from warnings import warn
 
@@ -28,7 +28,7 @@ from ..utils.functions import expand_substitution, checkValue
 from ..converters.codes.gpt import gpt_ccs
 
 
-class BaseElementTranslator(Element):
+class BaseElementTranslator(PhysicalBaseElement):
     """
     Translator class for converting a :class:`~nala.models.element.Element` instance into a string or
     object that can be understood by various simulation codes.
@@ -808,7 +808,13 @@ class BaseElementTranslator(Element):
     @computed_field
     @property
     def length(self) -> float:
-        return self.physical.length
+        leng = self.physical.length
+        if leng == 0:
+            try:
+                return self.magnetic.length
+            except Exception:
+                return leng
+        return leng
 
     @computed_field
     @property
