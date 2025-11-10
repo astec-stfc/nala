@@ -75,11 +75,12 @@ def flatten(dictionary: Dict, parent_key: str="", separator: str="_") -> Dict:
     """
     items = []
     for key, value in dictionary.items():
-        new_key = parent_key + separator + key if parent_key else key
-        if isinstance(value, MutableMapping):
-            items.extend(flatten(value, new_key, separator=separator).items())
-        else:
-            items.append((new_key, value))
+        if isinstance(key, str):
+            new_key = parent_key + separator + key if parent_key else key
+            if isinstance(value, MutableMapping):
+                items.extend(flatten(value, new_key, separator=separator).items())
+            else:
+                items.append((new_key, value))
     return dict(items)
 
 
