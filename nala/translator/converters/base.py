@@ -134,7 +134,7 @@ class BaseElementTranslator(PhysicalBaseElement):
                     elif value == "angle/2":
                         value = self.magnetic.angle / 2
                     elif key in ["k1", "k2", "k3", "k4", "k5", "k6"]:
-                        value = getattr(self, f"{key}l")
+                        value = getattr(self, f"{key}")
                     value = 1 if value is True else value
                     value = 0 if value is False else value
                     if key not in keys:

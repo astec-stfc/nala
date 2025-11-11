@@ -18,6 +18,7 @@ from nala.models.element import (
     Horizontal_Corrector,
     Vertical_Corrector,
     NonLinearLens,
+    TwissMatch,
 )
 
 from .base import BaseElementTranslator
@@ -34,6 +35,8 @@ from .diagnostic import DiagnosticTranslator
 from .aperture import ApertureTranslator
 from .plasma import PlasmaTranslator
 from .laser import LaserTranslator
+from .twiss import TwissMatchTranslator
+
 
 def translate_elements(
         elements: List[Element],
@@ -87,6 +90,8 @@ def translate_elements(
             translator = PlasmaTranslator
         elif isinstance(elem, Laser):
             translator = LaserTranslator
+        elif isinstance(elem, TwissMatch):
+            translator = TwissMatchTranslator
         else:
             translator = BaseElementTranslator
         elem_dict.update({elem.name: translator.model_validate(elem.model_dump())})

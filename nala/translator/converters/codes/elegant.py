@@ -55,37 +55,84 @@ class ElegantLatticeImporter(BaseModel):
             self.update_floor_coordinates()
         self.elements = {}
 
+        def calculate_middle_from_start(start_pos, length, physical_angle, rotation):
+            """Calculate middle position from start position, accounting for rotation and bending."""
+            start = np.array(start_pos)
+
+            # Calculate local offset from start to middle
+            if abs(physical_angle) > 1e-9:
+                # Bent element - arc geometry
+                mx_local = length * (1 - np.cos(physical_angle)) / (2 * physical_angle)
+                my_local = 0
+                mz_local = length * np.sin(physical_angle) / (2 * physical_angle)
+            else:
+                # Straight element
+                mx_local = 0
+                my_local = 0
+                mz_local = length / 2.0
+
+            # Apply only the yaw rotation (horizontal bending)
+            if len(rotation) >= 3 and abs(rotation[2]) > 1e-12:
+                yaw = rotation[2]
+                # Rotation around Y axis
+                cos_yaw = np.cos(yaw)
+                sin_yaw = np.sin(yaw)
+
+                mx_rotated = mx_local * cos_yaw + mz_local * sin_yaw
+                my_rotated = my_local  # No change in y for yaw rotation
+                mz_rotated = -mx_local * sin_yaw + mz_local * cos_yaw
+
+                local_offset = np.array([mx_rotated, my_rotated, mz_rotated])
+            else:
+                local_offset = np.array([mx_local, my_local, mz_local])
+
+            # Calculate middle position
+            middle = start + local_offset
+            return middle
+
         for k, v in self.elegant_data.items():
             if k in self.floor_data:
                 vtype = v["hardware_type"]
                 if "drift" not in vtype.lower():
-                    if "l" in v:
-                        if v["hardware_type"].lower() == "dipole":
-                            zpos = (v["l"] / 2) * np.cos(v["angle"])
-                        else:
-                            zpos = v["l"] / 2
-                        centre = np.array(self.floor_data[k]["start"]) + np.array([0, 0, zpos])
+                    if "l" in v and v["l"] > 0:
+                        # Get physical angle for bent elements
+                        physical_angle = 0.0
+                        if v["hardware_type"].lower() == "dipole" and "angle" in v:
+                            physical_angle = v["angle"]
+
+                        # Calculate middle position properly
+                        centre = calculate_middle_from_start(
+                            start_pos=self.floor_data[k]["start"],
+                            length=v["l"],
+                            physical_angle=physical_angle,
+                            rotation=self.floor_data[k]["start_rotation"]
+                        )
                     else:
+                        # Zero length element - middle is same as start
                         centre = np.array(self.floor_data[k]["start"])
+                        physical_angle = 0.0
+
                     v = self._convert_k_to_kl(v)
                     v = self._convert_ele_phase_to_phase(v)
-                        # v = sanitize_kwargs(
-                        #     model_cls=getattr(NALA_elements, v["hardware_type"]),
-                        #     data=v
-                        # )
+
                     rotation = self.floor_data[k]["start_rotation"]
                     if "physical" in v:
                         v["physical"].update(
                             {
-                                "middle": centre,
+                                "middle": centre.tolist(),
                                 "global_rotation": rotation,
                             }
                         )
                     else:
                         v["physical"] = {
-                                "middle": centre,
-                                "global_rotation": rotation,
-                            }
+                            "middle": centre.tolist(),
+                            "global_rotation": rotation,
+                        }
+
+                    # Add physical_angle for bent elements
+                    if abs(physical_angle) > 1e-9:
+                        v["physical"]["physical_angle"] = physical_angle
+
                     self.elements.update({k: getattr(NALA_elements, vtype)(**v)})
 
     def create_section(self, section: Dict) -> Dict[str, SectionLattice]:
