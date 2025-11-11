@@ -176,10 +176,22 @@ class BmadLatticeImporter(BaseModel):
                 elif self.types[universe][b][i] in magnetic_orders:
                     hardware_type = self.types[universe][b][i]
                     try:
-                        kl = {"kl": parameters[f"K{magnetic_orders[hardware_type]}"]}
+                        kl = {
+                            "multipoles": {
+                                f"K{magnetic_orders[hardware_type]}L": {
+                                    "normal": parameters[f"K{magnetic_orders[hardware_type]}"] * self.lengths[universe][b][i],
+                                    "order": magnetic_orders[hardware_type],
+                                },
+                            },
+                        }
                     except KeyError:
                         kl = {
-                            "kl": parameters["ANGLE"],
+                            "multipoles": {
+                                    f"K{magnetic_orders[hardware_type]}L": {
+                                        "normal": parameters["ANGLE"],
+                                        "order": magnetic_orders[hardware_type],
+                                    },
+                                },
                             "entrance_edge_angle": parameters["E1"],
                             "exit_edge_angle": parameters["E2"],
                         }
@@ -193,56 +205,58 @@ class BmadLatticeImporter(BaseModel):
                             **kl,
                         }
                     }
-
-                elems = {
-                        nam: {
-                            "physical": {
-                                "position": middle,
-                                "global_rotation": [pitch, roll, yaw, ],
-                                "length": float(self.lengths[universe][b][i]),
+                if elem_data:
+                    elems = {
+                            nam: {
+                                "physical": {
+                                    "position": middle,
+                                    "global_rotation": [pitch, roll, yaw, ],
+                                    "length": float(self.lengths[universe][b][i]),
+                                },
+                                "name": nam,
+                                "hardware_class": "Magnet",
+                                "hardware_type": hardware_type,
+                                "machine_area": "test",
+                            }
+                        }
+                    elems[nam].update(**elem_data)
+                    if self.types[universe][b][i] == "Kicker":
+                        helem = elems.copy()
+                        helem.update(
+                            {
+                                "name": horizontal,
+                                "hardware_type": "Horizontal_Corrector",
+                                "magnetic": hcor,
+                            }
+                        )
+                        velem = elems.copy()
+                        velem.update(
+                            {
+                                "name": vertical,
+                                "hardware_type": "Vertical_Corrector",
+                                "magnetic": vcor,
+                            }
+                        )
+                        comb = Combined_Corrector(**elems[nam])
+                        hori = Horizontal_Corrector(**elems[nam])
+                        vert = Vertical_Corrector(**elems[nam])
+                        self.nala_elems[universe][b].update(
+                            {
+                                nam: comb,
+                                horizontal: hori,
+                                vertical: vert,
                             },
-                            "name": nam,
-                            "hardware_class": "Magnet",
-                            "hardware_type": "Combined_Corrector",
-                            "machine_area": "test",
-                        }
-                    }
-                elems.update(**elem_data)
-                if self.types[universe][b][i] == "Kicker":
-                    helem = elems.copy()
-                    helem.update(
-                        {
-                            "name": horizontal,
-                            "hardware_type": "Horizontal_Corrector",
-                            "magnetic": hcor,
-                        }
-                    )
-                    velem = elems.copy()
-                    velem.update(
-                        {
-                            "name": vertical,
-                            "hardware_type": "Vertical_Corrector",
-                            "magnetic": vcor,
-                        }
-                    )
-                    comb = Combined_Corrector(**elems[nam])
-                    hori = Horizontal_Corrector(**elems[nam])
-                    vert = Vertical_Corrector(**elems[nam])
-                    self.nala_elems[universe][b].update(
-                        {
-                            nam: comb,
-                            horizontal: hori,
-                            vertical: vert,
-                        },
-                    )
-                elif self.types[universe][b][i] in magnetic_orders:
-                    if self.types[universe][b][i] in ["RBend", "SBend"]:
-                        self.types[universe][b][i] = "Dipole"
-                    self.nala_elems[universe][b].update(
-                        {
-                            nam: getattr(NALA_elements, self.types[universe][b][i])(**elems[nam])
-                        }
-                    )
+                        )
+                    elif self.types[universe][b][i] in magnetic_orders:
+                        if self.types[universe][b][i] in ["RBend", "SBend"]:
+                            self.types[universe][b][i] = "Dipole"
+                            elems[nam]["hardware_type"] = "Dipole"
+                            elems[nam]["physical"]["physical_angle"] = -elems[nam]["magnetic"]["multipoles"]["K0L"]["normal"]
+                        self.nala_elems[universe][b].update(
+                            {
+                                nam: getattr(NALA_elements, self.types[universe][b][i])(**elems[nam])
+                            }
+                        )
 
     def create_section(self, universe: int, branch: str) -> Dict[str, SectionLattice]:
         if not self.elements:
