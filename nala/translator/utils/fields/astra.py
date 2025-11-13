@@ -99,16 +99,16 @@ def generate_astra_field_data(self) -> np.ndarray:
             if any(
                     [
                         getattr(self, param) is None for param in [
-                            "start_cell_z",
-                            "end_cell_z",
-                            "mode_numerator",
-                            "mode_denominator"
-                        ]
+                        "start_cell_z",
+                        "end_cell_z",
+                        "mode_numerator",
+                        "mode_denominator"
+                    ]
                     ]
             ):
                 raise ValueError(
                     "start_cell_z, end_cell_z", "mode_numerator", "mode_denominator"
-                    "must be defined for TravellingWave cavities"
+                                                                  "must be defined for TravellingWave cavities"
                 )
             preamble = np.array(
                 [
@@ -125,6 +125,12 @@ def generate_astra_field_data(self) -> np.ndarray:
             )
         else:
             data = np.transpose([zdata, ezdata])
+    elif self.field_type == "2DElectroDynamic":
+        warn(f"Converting 2DElectroDynamic field map for {self.filename} to 1D for ASTRA")
+        idx = np.where(self.r.value.val == 0)
+        zdata = self.z.value.val[idx]
+        ezdata = self.Ez.value.val[idx]
+        data = np.transpose([zdata, ezdata])
     elif self.field_type == "1DQuadrupole":
         gdata = self.G.value.val
         data = np.transpose([zdata, gdata])

@@ -220,10 +220,11 @@ class SectionLattice(BaseLatticeModel):
         #     elements = self._get_all_elements()
 
         for elem in elements:
-            originalelements[elem.name] = elem
-            pos = elem.physical.start.array
-            positions.append(pos)
-            positions.append(elem.physical.end.array)
+            if not elem.subelement:
+                originalelements[elem.name] = elem
+                pos = elem.physical.start.array
+                positions.append(pos)
+                positions.append(elem.physical.end.array)
         positions = positions[1:]
         positions.append(positions[-1])
         driftdata = list(
