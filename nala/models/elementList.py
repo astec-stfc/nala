@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Union
 from pydantic import field_validator, BaseModel, ValidationInfo, Field, PositiveInt
 from warnings import warn
 from ._functions import read_yaml, merge_two_dicts
-from .element import baseElement, Drift, PhysicalBaseElement
+from .element import baseElement, Drift, PhysicalBaseElement, Diagnostic
 from .physical import PhysicalElement, Position
 from .baseModels import ModelBase
 from .exceptions import LatticeError
@@ -222,9 +222,12 @@ class SectionLattice(BaseLatticeModel):
         for elem in elements:
             if not elem.subelement:
                 originalelements[elem.name] = elem
-                pos = elem.physical.start.array
-                positions.append(pos)
-                positions.append(elem.physical.end.array)
+                if isinstance(elem, Diagnostic):
+                    elem.physical.length = 0
+                start = elem.physical.start.array
+                end = elem.physical.start.array
+                positions.append(start)
+                positions.append(end)
         positions = positions[1:]
         positions.append(positions[-1])
         driftdata = list(
