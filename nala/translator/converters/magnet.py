@@ -1096,7 +1096,7 @@ class SolenoidTranslator(BaseElementTranslator):
                     val = 1 if value is True else value
                     val = 0 if value is False else val
                     if key == "ks":
-                        val = self.magnetic.field_amplitude / self.magnetic.length
+                        val = self.magnetic.field_amplitude# / self.magnetic.length
                     if val is not None and key not in keys:
                         tmpstring = ", " + key + " = " + str(val)
                         wholestring += tmpstring

@@ -277,10 +277,11 @@ class SectionLatticeTranslator(SectionLattice):
                     energy += tw_cavity_energy_gain(d)
                 else:
                     energy += d.field_amplitude * np.cos(np.pi * d.phase / 180)
-            stnew = d.to_opal(sval=svals[d.name], designenergy=energy)
+            sval = d.physical.start.z if d.subelement else svals[d.name]
+            stnew = d.to_opal(sval=sval, designenergy=energy)
             if len(stnew) > 0:
                 written.append(d.name)
-                fulltext += d.to_opal(sval=svals[d.name], designenergy=energy)
+                fulltext += d.to_opal(sval=sval, designenergy=energy)
             zstops.append(d.physical.end.z)
         zstop = max(zstops)
         self.opal_headers["track"].ZSTOP = zstop

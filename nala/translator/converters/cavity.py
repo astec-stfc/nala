@@ -98,12 +98,12 @@ class RFCavityTranslator(BaseElementTranslator):
                 self.simulation.wakefield_definition == ""
         ):
             etype = "rfca"
-            if self.simulation.field_definition is not None:
-                etype = "rftmez0"
-                if ".sdds" not in self.simulation.field_definition:
-                    field_file_name = self.generate_field_file_name(
-                    self.simulation.field_definition, code="elegant"
-                )
+            # if self.simulation.field_definition is not None:
+                # etype = "rftmez0"
+                # if ".sdds" not in self.simulation.field_definition:
+                #     field_file_name = self.generate_field_file_name(
+                #     self.simulation.field_definition, code="elegant"
+                # )
         else:
             wakefield_file_name = self.generate_field_file_name(
                 self.simulation.wakefield_definition, code="elegant"
