@@ -174,7 +174,7 @@ class BaseElementTranslator(PhysicalBaseElement):
                     if value == "angle":
                         value = self.magnetic.angle
                     if key in ["k1", "k2", "k3", "k4", "k5", "k6"]:
-                        value = getattr(self, f"{key}l")
+                        value = getattr(self, f"{key}l") / self.magnetic.length
                     setattr(obj, self._convertKeyword_Ocelot(key), value)
         return obj
 
