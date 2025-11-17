@@ -428,6 +428,7 @@ class Element(baseElement):
         electrical: :class:`~nala.models.electrical.ElectricalElement`: The electrical attributes of the element.
         manufacturer: :class:`~nala.models.manufacturer.Manufacturer`: The manufacturer attributes of the element.
         controls: :class:`~nala.models.control.ControlsInformation` | None: The control system attributes of the element.
+        reference: :class:`~nala.models.reference.ReferenceElement` | None: Reference information for the element.
     """
 
     simulation: SimulationElement = Field(default_factory=SimulationElement)
