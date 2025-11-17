@@ -442,6 +442,8 @@ gpt_scatterplate:
   keywords: { ECS, a, b, model }
 gpt_dtmaxt:
   keywords: { tstart, tend, dtmax }
+gpt_dtmint:
+  keywords: { dtmin }
 global_error:
   keywords:
     {

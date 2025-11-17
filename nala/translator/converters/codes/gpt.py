@@ -534,3 +534,27 @@ class gpt_dtmaxt(gpt_element):
             + ");\n"
         )
         return output
+
+
+class gpt_dtmint(gpt_element):
+    """
+    Class for specifying the minimum timestep size via `dtmin`.
+    """
+
+    dtmin: float = 0.0
+    """Maximum temporal step size"""
+
+    objectname: str = "dtmin"
+    """Name of object"""
+
+    objecttype: str = "gpt_dtmint"
+    """Type of object"""
+
+    def write_GPT(self, *args, **kwargs):
+        output = (
+            str(self.objectname)
+            + " = "
+            + str(self.dtmin)
+            + ";\n"
+        )
+        return output
