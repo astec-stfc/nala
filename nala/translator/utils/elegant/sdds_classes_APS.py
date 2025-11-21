@@ -113,13 +113,13 @@ class SDDS_Params:
             if k not in self.elegantParams:
                 self.elegantParams.update(
                     {
-                        k:
+                        f"{k}.{self.elegantData['ElementOccurence'][i]}":
                             {param: [] for param in list(self.elegantData.keys())[1:]}
                     }
                 )
             for val in list(self.elegantData.keys())[1:]:
                 if self.elegantData["ElementName"][i] == k:
-                    self.elegantParams[k][val].append(self.elegantData[val][i])
+                    self.elegantParams[f"{k}.{self.elegantData['ElementOccurence'][i]}"][val].append(self.elegantData[val][i])
 
     def create_element_dictionary(self) -> tuple:
         if not self.elegantParams:
@@ -141,7 +141,7 @@ class SDDS_Params:
                 for sf, aliases in type_conversion_rules_aliases.items():
                     if elemtype in aliases:
                         sfconvert.update(
-                            {k: {"hardware_type": sf, "name": k, "hardware_class": "Drift", "machine_area": "test"}})
+                            {k: {"hardware_type": sf, "name": k, "machine_area": "test"}})
                         found = True
                 if not found:
                     warn(f"Could not parse ELEGANT element type {elemtype} for {k}; setting as drift.")
@@ -196,4 +196,5 @@ class SDDS_Params:
                     warn(f"Apparent filename found for element {k}: "
                          f"{param} = {v['ParameterValueString'][i]}; "
                          f"check path, file format and column data")
+        print(sfconvert)
         return sfconvert, filenames

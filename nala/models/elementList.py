@@ -225,7 +225,7 @@ class SectionLattice(BaseLatticeModel):
                 if isinstance(elem, Diagnostic):
                     elem.physical.length = 0
                 start = elem.physical.start.array
-                end = elem.physical.start.array
+                end = elem.physical.end.array
                 positions.append(start)
                 positions.append(end)
         positions = positions[1:]
