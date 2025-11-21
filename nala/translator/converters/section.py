@@ -10,7 +10,7 @@ from .cavity import RFCavityTranslator
 from .converter import translate_elements
 from .diagnostic import DiagnosticTranslator
 from .wake import WakefieldTranslator
-from .codes.gpt import gpt_ccs, gpt_Zminmax
+from .codes.gpt import gpt_ccs, gpt_Zminmax, gpt_dtmint
 from ..utils.functions import tw_cavity_energy_gain
 from ..utils.fields import field
 
@@ -138,7 +138,7 @@ class SectionLatticeTranslator(SectionLattice):
             astrastr += "/ \n"
         return astrastr
 
-    def to_gpt(self, startz: float, endz: float, Brho: float = 0.0) -> str:
+    def to_gpt(self, startz: float, endz: float, Brho: float = 0.0, dtmin: float | None = None) -> str:
         """
         Create a GPT-compatible input file based on the lattice information and
         the settings provided in :attr:`~gpt_headers`.
@@ -154,6 +154,8 @@ class SectionLatticeTranslator(SectionLattice):
             End longitudinal location of the lattice.
         Brho: float
             Magnetic rigidity.
+        dtmin: float, optional
+            Minimum time step size for integration
 
         Returns
         -------
@@ -224,9 +226,12 @@ class SectionLatticeTranslator(SectionLattice):
         zminmax = gpt_Zminmax(
             ECS='"wcs", "I"',
             zmin=startz - 0.1,
-            zmax=endz + 0.1,
+            zmax=endz + 1,
         )
         fulltext += zminmax.write_GPT()
+        if dtmin is not None:
+            dtmint = gpt_dtmint(dtmin=dtmin)
+            fulltext += dtmint.write_GPT()
         return fulltext
 
     def to_opal(self, energy: float = 0, breakstr: str="") -> str:
