@@ -49,11 +49,11 @@ class SDDS_Floor:
         return [k for k, g in groupby(sorted(self.ElementName)) if len(list(g)) > 1]
 
     def number_element(self, elem):
-        if elem in self.duplicates:
-            no = self.counter.counter(elem)
-            self.counter.add(elem)
-            return elem + self.prefix + str(no)
-        return elem
+        # if elem in self.duplicates:
+        no = self.counter.counter(elem)
+        self.counter.add(elem)
+        return elem + self.prefix + str(no)
+        # return elem
 
     def import_sdds_floor_file(self, filename: str, page: int = 0) -> list:
         elegantObject = SDDSFile(index=1)
@@ -110,7 +110,7 @@ class SDDS_Params:
             self.import_sdds_params_file()
         self.elegantParams = {}
         for i, k in enumerate(self.elegantData["ElementName"]):
-            if k not in self.elegantParams:
+            if f"{k}.{self.elegantData['ElementOccurence'][i]}" not in self.elegantParams:
                 self.elegantParams.update(
                     {
                         f"{k}.{self.elegantData['ElementOccurence'][i]}":
@@ -119,7 +119,8 @@ class SDDS_Params:
                 )
             for val in list(self.elegantData.keys())[1:]:
                 if self.elegantData["ElementName"][i] == k:
-                    self.elegantParams[f"{k}.{self.elegantData['ElementOccurence'][i]}"][val].append(self.elegantData[val][i])
+                    self.elegantParams[f"{k}.{self.elegantData['ElementOccurence'][i]}"][val].append(
+                        self.elegantData[val][i])
 
     def create_element_dictionary(self) -> tuple:
         if not self.elegantParams:
@@ -173,10 +174,6 @@ class SDDS_Params:
                     merged = keyword_conversion_rules_elegant[sftype.lower()] | keyword_conversion_rules_elegant[
                         "general"]
                 kwele = {y: x for x, y in merged.items()}
-                # if param in kwele:
-                val = v["ParameterValueString"][i] if len(v["ParameterValueString"][i]) > 0 else \
-                    v["ParameterValue"][i]
-                # sfconvert[k].update({kwele[param]: val})
                 for subk in model_fields:
                     val = v["ParameterValueString"][i] if len(v["ParameterValueString"][i]) > 0 else \
                         v["ParameterValue"][i]
@@ -196,5 +193,4 @@ class SDDS_Params:
                     warn(f"Apparent filename found for element {k}: "
                          f"{param} = {v['ParameterValueString'][i]}; "
                          f"check path, file format and column data")
-        print(sfconvert)
         return sfconvert, filenames
