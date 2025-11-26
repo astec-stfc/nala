@@ -358,7 +358,7 @@ Other useful sets of information about an :py:class:`Element <nala.models.elemen
 manufacturer and reference information, stored in
 :py:class:`ElectricalElement <nala.models.electrical.ElectricalElement>`,
 :py:class:`ManufacturerElement <nala.models.manufacturer.ManufacturerElement>`, and
-:py:class:`ManufacturerElement <nala.models.reference.ReferenceElement>`, respectively.
+:py:class:`ReferenceElement <nala.models.reference.ReferenceElement>`, respectively.
 
 These classes can be used to store additional metadata about an element that may be useful for
 maintenance, procurement, or documentation purposes.
