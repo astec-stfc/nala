@@ -130,7 +130,8 @@ class SectionLatticeTranslator(SectionLattice):
                     except Exception as ex:
                         pass
                 else:
-                    if not e.hardware_class == "Diagnostic":
+                    cond = "&" + e.hardware_type.upper().replace("RF", "").replace("FIELD", "") in headers
+                    if not e.hardware_class == "Diagnostic" and not cond:
                         warn(f"Element of type {e.hardware_type} not supported for ASTRA")
         for k, v in element_headers.items():
             astrastr += k + "\n"

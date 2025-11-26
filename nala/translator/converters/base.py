@@ -961,9 +961,10 @@ class BaseElementTranslator(PhysicalBaseElement):
                 param.write_field_file(code=code, location=efield_basename)
             )
         else:
-            warn(
-                f"param associated with {self.name} does not have a filename: {param}, it must be a `field` object"
-            )
+            if param:
+                warn(
+                    f"param associated with {self.name} does not have a filename: {param}, it must be a `field` object"
+                )
         return None
 
     @property
