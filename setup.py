@@ -1,13 +1,21 @@
 from setuptools import setup, find_packages
-import versioneer
 
-with open("README.md", "r") as readme_file:
-    readme = readme_file.read()
-
-requirements = ["pydantic>=2", "pyyaml>=6", "numpy>=1.26"]
+with open("README.md", "r", encoding="utf-8") as f:
+    readme = f.read()
 
 setup(
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    name="nala-accelerator",  # must match pyproject.toml
     packages=find_packages(),
+    include_package_data=True,
+    install_requires=[
+        "pydantic>=2",
+        "pyyaml>=6",
+        "numpy>=1.26",
+        "scipy>=1.15",
+        "munch>=4",
+    ],
+    python_requires=">=3.10",
+    long_description=readme,
+    long_description_content_type="text/markdown",
 )
+

@@ -12,13 +12,10 @@ description = "A standardized lattice format for particle accelerators"
 readme = "README.md"
 dynamic = ["version"]
 authors = [
-    {name = "James Jones", email = "james.jones@stfc.ac.uk"},
+    {name = "me", email = "me@me.com"},
 ]
 maintainers = [
-    {name = "James Jones", email = "james.jones@stfc.ac.uk"},
-    {name = "Alex Brynes", email = "alexander.brynes@stfc.ac.uk"},
-    {name = "Mark Johnson", email = "mark.johnson@stfc.ac.uk"},
-    {name = "Matt King", email = "matthew.king@stfc.ac.uk"},
+    {name = "me", email = "me@me.com"},
 ]
 dependencies = [
     "pydantic>=2", 
