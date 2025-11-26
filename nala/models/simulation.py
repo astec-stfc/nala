@@ -123,18 +123,18 @@ class DriftSimulationElement(SimulationElement):
     lsc_bins: PositiveInt = 20
     """Number of bins for LSC calculations"""
 
-    lsc_high_frequency_cutoff_start: float = -1.0
+    lsc_high_frequency_cutoff_start: float | None = None
     """Spatial frequency at which smoothing filter begins. If not positive, no frequency filter smoothing is done. 
     See `Elegant manual LSC drift`_
     """
 
-    lsc_high_frequency_cutoff_end: float = -1.0
+    lsc_high_frequency_cutoff_end: float | None = None
     """Spatial frequency at which smoothing filter is 0. See `Elegant manual LSC drift`_"""
 
-    lsc_low_frequency_cutoff_start: float = -1.0
+    lsc_low_frequency_cutoff_start: float | None = None
     """Highest spatial frequency at which low-frequency cutoff filter is zero. See `Elegant manual LSC drift`_"""
 
-    lsc_low_frequency_cutoff_end: float = -1.0
+    lsc_low_frequency_cutoff_end: float | None = None
     """Lowest spatial frequency at which low-frequency cutoff filter is 1. See `Elegant manual LSC drift`_"""
 
 

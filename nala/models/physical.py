@@ -227,15 +227,6 @@ class PhysicalElement(IgnoreExtra):
     def __repr__(self):
         return self.__class__.__name__ + "(" + self.__str__() + ")"
 
-    # def __add__(self, other: PhysicalElement) -> [Position, Rotation]:
-    #     pass
-    #
-    # def __radd__(self, other: PhysicalElement) ->  -> [Position, Rotation]:
-    #     pass
-    #
-    # def __sub__ (self, other: PhysicalElement) ->  -> [Position, Rotation]:
-    #     pass
-
     @field_validator("middle", "datum", mode="before")
     @classmethod
     def validate_middle(cls, v: Union[float, int, Dict, List, np.ndarray]) -> Position:
@@ -285,20 +276,48 @@ class PhysicalElement(IgnoreExtra):
     @property
     def rotation_matrix(self) -> np.ndarray:
         """
-        Get the rotation matrix of the element based on `rotation.theta` + `global_rotation.theta`.
+        Get the 3D rotation matrix of the element based on combined rotations.
+        Convention: [pitch, roll, yaw] = [rotation around X, rotation around Z, rotation around Y]
 
         Returns
         -------
         np.ndarray
-            Rotation matrix
+            3x3 Rotation matrix
         """
-        return _rotation_matrix(self.rotation.theta + self.global_rotation.theta)
+        # Get the combined rotation angles
+        pitch = self.rotation.phi + self.global_rotation.phi  # X rotation (pitch) - affects Y,Z
+        roll = self.rotation.psi + self.global_rotation.psi  # Z rotation (roll) - affects X,Y
+        yaw = self.rotation.theta + self.global_rotation.theta  # Y rotation (yaw) - affects X,Z
+
+        # Rotation matrix around X axis (pitch)
+        Rx = np.array([
+            [1, 0, 0],
+            [0, np.cos(pitch), -np.sin(pitch)],
+            [0, np.sin(pitch), np.cos(pitch)]
+        ])
+
+        # Rotation matrix around Z axis (roll)
+        Rz = np.array([
+            [np.cos(roll), -np.sin(roll), 0],
+            [np.sin(roll), np.cos(roll), 0],
+            [0, 0, 1]
+        ])
+
+        # Rotation matrix around Y axis (yaw) - this is the horizontal bending
+        Ry = np.array([
+            [np.cos(yaw), 0, np.sin(yaw)],
+            [0, 1, 0],
+            [-np.sin(yaw), 0, np.cos(yaw)]
+        ])
+
+        # Combined rotation matrix - apply yaw first (most common), then pitch, then roll
+        return Rx @ Rz @ Ry
 
     def rotated_position(
-        self, vec: List[Union[int, float]] = [0, 0, 0]
-    ) -> List[Union[int, float]]:
+            self, vec: List[Union[int, float]] = [0, 0, 0]
+    ) -> np.ndarray:
         """
-        Get the rotated position of the element  based on the dot product of `vec` with its :attr:`~rotation_matrix`.
+        Get the rotated position of the element based on matrix multiplication with rotation_matrix.
 
         Parameters
         ----------
@@ -307,10 +326,10 @@ class PhysicalElement(IgnoreExtra):
 
         Returns
         -------
-        List[float]
-            Dot product of `vec` with :attr:`~rotation_matrix`.
+        np.ndarray
+            Rotated vector.
         """
-        return np.dot(np.array(vec), self.rotation_matrix)
+        return self.rotation_matrix @ np.array(vec)
 
     @property
     def start(self) -> Position:
@@ -323,15 +342,25 @@ class PhysicalElement(IgnoreExtra):
             Start position of the element.
         """
         middle = np.array(self.middle.array)
-        sx = 0
-        sy = 0
-        sz = (
-            1.0 * self.length * np.tan(0.5 * self.physical_angle) / self.physical_angle
-            if abs(self.physical_angle) > 1e-9
-            else 1.0 * self.length / 2.0
-        )
+
+        # Calculate local offset from middle to start
+        if abs(self.physical_angle) > 1e-9:
+            # Bent element - correct arc geometry
+            # The start is offset from middle by half the chord deviation
+            sx = -self.length * (1 - np.cos(self.physical_angle)) / (2 * self.physical_angle)
+            sy = 0
+            sz = -self.length * np.sin(self.physical_angle) / (2 * self.physical_angle)
+        else:
+            # Straight element
+            sx = 0
+            sy = 0
+            sz = -self.length / 2.0
+
+        # Local offset vector
         vec = [sx, sy, sz]
-        start = middle - self.rotated_position(vec)
+
+        # Rotate to global coordinates and add to middle
+        start = middle + self.rotated_position(vec)
         return Position.from_list(start)
 
     @property
@@ -344,17 +373,23 @@ class PhysicalElement(IgnoreExtra):
         :class:`~nala.models.physical.Position
             End position of the element.
         """
-        ex = (
-            (self.length * (1 - np.cos(self.physical_angle))) / self.physical_angle
-            if abs(self.physical_angle) > 1e-9
-            else 0
-        )
-        ey = 0
-        ez = (
-            (self.length * (np.sin(self.physical_angle))) / self.physical_angle
-            if abs(self.physical_angle) > 1e-9
-            else self.length
-        )
+        middle = np.array(self.middle.array)
+
+        # Calculate local offset from middle to end
+        if abs(self.physical_angle) > 1e-9:
+            # Bent element - arc geometry (symmetric to start)
+            ex = self.length * (1 - np.cos(self.physical_angle)) / (2 * self.physical_angle)
+            ey = 0
+            ez = self.length * np.sin(self.physical_angle) / (2 * self.physical_angle)
+        else:
+            # Straight element
+            ex = 0
+            ey = 0
+            ez = self.length / 2.0
+
+        # Local offset vector
         vec = [ex, ey, ez]
-        end = self.start.array + self.rotated_position(vec)
+
+        # Rotate to global coordinates and add to middle
+        end = middle + self.rotated_position(vec)
         return Position.from_list(end)

@@ -134,21 +134,57 @@ class BmadLatticeImporter(BaseModel):
     def create_element_dictionary(self, universe: int) -> None:
         for b in self.names_numbered[universe].keys():
             for i, nam in enumerate(self.names_numbered[universe][b]):
+                end_x = self.xpos[universe][b][i]
+                end_y = self.ypos[universe][b][i]
+                end_z = self.zpos[universe][b][i]
+
+                # Get the start position (end of previous element, or origin if first)
+                if i > 0:
+                    start_x = self.xpos[universe][b][i - 1]
+                    start_y = self.ypos[universe][b][i - 1]
+                    start_z = self.zpos[universe][b][i - 1]
+                else:
+                    # First element starts at origin (or you might have a specific starting point)
+                    start_x = 0.0
+                    start_y = 0.0
+                    start_z = 0.0
+
+                # Calculate middle position as the average of start and end
                 middle = [
-                    self.xpos[universe][b][i],
-                    self.ypos[universe][b][i],
-                    (self.zpos[universe][b][i] - self.lengths[universe][b][i] / 2)
+                    (start_x + end_x) / 2.0,
+                    (start_y + end_y) / 2.0,
+                    (start_z + end_z) / 2.0
                 ]
-                forward = (
-                    self.xpos[universe][b][i],
-                    self.ypos[universe][b][i],
-                    self.zpos[universe][b][i] - self.lengths[universe][b][i],
-                )
+
+                # Calculate the beam direction at the START of this element
+                # This is the direction the beam is traveling when it enters the element
+                if i > 1:
+                    # Direction from the element before last to the last element
+                    # This gives us the exit direction of the previous element
+                    forward = (
+                        self.xpos[universe][b][i - 1] - self.xpos[universe][b][i - 2],
+                        self.ypos[universe][b][i - 1] - self.ypos[universe][b][i - 2],
+                        self.zpos[universe][b][i - 1] - self.zpos[universe][b][i - 2]
+                    )
+                elif i == 1:
+                    # For the second element, use direction from origin to first element's end
+                    forward = (
+                        self.xpos[universe][b][0],
+                        self.ypos[universe][b][0],
+                        self.zpos[universe][b][0]
+                    )
+                else:
+                    # For the first element, assume initial direction along z-axis
+                    # (or you might have a specific initial direction)
+                    forward = (0.0, 0.0, 1.0)
+
+                # Calculate rotation angles from the forward direction at element start
                 pitch, roll, yaw = rotation_angles(forward)
 
                 elem_data = {}
                 parameters = self.params[universe][b][i]
                 if self.types[universe][b][i] == "Kicker":
+                    hardware_class = "Magnet"
                     hardware_type = "Combined_Corrector"
                     horizontal = nam + "_H"
                     vertical = nam + "_V"
@@ -175,11 +211,24 @@ class BmadLatticeImporter(BaseModel):
                     }
                 elif self.types[universe][b][i] in magnetic_orders:
                     hardware_type = self.types[universe][b][i]
+                    hardware_class = "Magnet"
                     try:
-                        kl = {"kl": parameters[f"K{magnetic_orders[hardware_type]}"]}
+                        kl = {
+                            "multipoles": {
+                                f"K{magnetic_orders[hardware_type]}L": {
+                                    "normal": parameters[f"K{magnetic_orders[hardware_type]}"] * self.lengths[universe][b][i],
+                                    "order": magnetic_orders[hardware_type],
+                                },
+                            },
+                        }
                     except KeyError:
                         kl = {
-                            "kl": parameters["ANGLE"],
+                            "multipoles": {
+                                    f"K{magnetic_orders[hardware_type]}L": {
+                                        "normal": parameters["ANGLE"],
+                                        "order": magnetic_orders[hardware_type],
+                                    },
+                                },
                             "entrance_edge_angle": parameters["E1"],
                             "exit_edge_angle": parameters["E2"],
                         }
@@ -193,56 +242,77 @@ class BmadLatticeImporter(BaseModel):
                             **kl,
                         }
                     }
-
-                elems = {
-                        nam: {
-                            "physical": {
-                                "position": middle,
-                                "global_rotation": [pitch, roll, yaw, ],
-                                "length": float(self.lengths[universe][b][i]),
-                            },
-                            "name": nam,
-                            "hardware_class": "Magnet",
-                            "hardware_type": "Combined_Corrector",
-                            "machine_area": "test",
-                        }
+                elif self.types[universe][b][i] == "Marker":
+                    hardware_class = "Simulation"
+                    hardware_type = "Marker"
+                    markelem = {
+                        "physical": {
+                                    "position": middle,
+                                    "global_rotation": [pitch, roll, yaw, ],
+                                    "length": float(self.lengths[universe][b][i]),
+                                },
+                        "name": nam,
+                        "hardware_class": hardware_class,
+                        "hardware_type": hardware_type,
+                        "machine_area": "test",
                     }
-                elems.update(**elem_data)
-                if self.types[universe][b][i] == "Kicker":
-                    helem = elems.copy()
-                    helem.update(
-                        {
-                            "name": horizontal,
-                            "hardware_type": "Horizontal_Corrector",
-                            "magnetic": hcor,
-                        }
-                    )
-                    velem = elems.copy()
-                    velem.update(
-                        {
-                            "name": vertical,
-                            "hardware_type": "Vertical_Corrector",
-                            "magnetic": vcor,
-                        }
-                    )
-                    comb = Combined_Corrector(**elems[nam])
-                    hori = Horizontal_Corrector(**elems[nam])
-                    vert = Vertical_Corrector(**elems[nam])
                     self.nala_elems[universe][b].update(
                         {
-                            nam: comb,
-                            horizontal: hori,
-                            vertical: vert,
-                        },
-                    )
-                elif self.types[universe][b][i] in magnetic_orders:
-                    if self.types[universe][b][i] in ["RBend", "SBend"]:
-                        self.types[universe][b][i] = "Dipole"
-                    self.nala_elems[universe][b].update(
-                        {
-                            nam: getattr(NALA_elements, self.types[universe][b][i])(**elems[nam])
+                            nam: getattr(NALA_elements, self.types[universe][b][i])(**markelem)
                         }
                     )
+                if elem_data:
+                    elems = {
+                            nam: {
+                                "physical": {
+                                    "position": middle,
+                                    "global_rotation": [pitch, roll, yaw, ],
+                                    "length": float(self.lengths[universe][b][i]),
+                                },
+                                "name": nam,
+                                "hardware_class": hardware_class,
+                                "hardware_type": hardware_type,
+                                "machine_area": "test",
+                            }
+                        }
+                    elems[nam].update(**elem_data)
+                    if self.types[universe][b][i] == "Kicker":
+                        helem = elems.copy()
+                        helem.update(
+                            {
+                                "name": horizontal,
+                                "hardware_type": "Horizontal_Corrector",
+                                "magnetic": hcor,
+                            }
+                        )
+                        velem = elems.copy()
+                        velem.update(
+                            {
+                                "name": vertical,
+                                "hardware_type": "Vertical_Corrector",
+                                "magnetic": vcor,
+                            }
+                        )
+                        comb = Combined_Corrector(**elems[nam])
+                        hori = Horizontal_Corrector(**elems[nam])
+                        vert = Vertical_Corrector(**elems[nam])
+                        self.nala_elems[universe][b].update(
+                            {
+                                nam: comb,
+                                horizontal: hori,
+                                vertical: vert,
+                            },
+                        )
+                    elif self.types[universe][b][i] in magnetic_orders:
+                        if self.types[universe][b][i] in ["RBend", "SBend"]:
+                            self.types[universe][b][i] = "Dipole"
+                            elems[nam]["hardware_type"] = "Dipole"
+                            elems[nam]["physical"]["physical_angle"] = -elems[nam]["magnetic"]["multipoles"]["K0L"]["normal"]
+                        self.nala_elems[universe][b].update(
+                            {
+                                nam: getattr(NALA_elements, self.types[universe][b][i])(**elems[nam])
+                            }
+                        )
 
     def create_section(self, universe: int, branch: str) -> Dict[str, SectionLattice]:
         if not self.elements:

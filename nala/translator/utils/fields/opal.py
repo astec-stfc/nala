@@ -116,9 +116,9 @@ def write_opal_field_file(
         zlen = int(len(repeating_floats) - 1)
         rlen = int((shape / len(repeating_floats)) - 1)
         head = ["2DDynamic", orient]
-        leng = ["0.0", str(self.length * 10), str(zlen)]
+        leng = ["0.0", str(self.length * 100), str(zlen)]
         freq = [str(frequency * 1e-6)]
-        rad = ["0.0", str(self.radius * 10), str(rlen)]
+        rad = ["0.0", str(self.radius * 100), str(rlen)]
         data = np.transpose([ezvals, ervals, eabsvals, brvals])
         header = [head, leng, freq, rad]
     elif "wake" in self.field_type.lower():
@@ -190,8 +190,21 @@ def read_opal_field_file(
             setattr(self, "length", float(rl[1].split(" ")[1]) * 1e-2)
             setattr(self, "frequency", float(rl[2]) * 1e6)
             setattr(self, "radius", float(rl[3].split(" ")[1]) * 1e-2)
-            setattr(self, "orientation", re.split("[" + "\\".join(d) + "]", rl[0]))
+            setattr(self, "orientation", rl[0].split(" ")[1].strip("\n"))
         fdat = np.loadtxt(filename, skiprows=4)
+        zfull = np.tile(np.linspace(0, self.length, int(rl[1].split(" ")[2]) + 1), int(rl[3].split(" ")[2]) + 1)
+        values = np.arange(0, self.radius, self.radius / (int(rl[3].split(" ")[2]) + 1))
+        rpattern = np.repeat(values, int(rl[1].split(" ")[2]) + 1)
+        setattr(
+            self,
+            "z",
+            FieldParameter(name="z", value=UnitValue(zfull, units="m")),
+        )
+        setattr(
+            self,
+            "r",
+            FieldParameter(name="r", value=UnitValue(rpattern, units="m")),
+        )
         setattr(
             self,
             "Ez",
@@ -234,7 +247,7 @@ def read_opal_field_file(
     elif field_type == "1DElectroDynamic":
         with open(filename) as f:
             rl = f.readlines()
-            if rl[0].split(" ")[0] not in ["ASTRADynamic"]:
+            if rl[0].split(" ")[0] not in ["AstraDynamic"]:
                 raise NotImplementedError(
                     f"{rl[0].split(' ')[0]} field type not implemented for OPAL fields"
                 )

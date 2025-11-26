@@ -4,6 +4,11 @@ from typing import Union
 from ..models.elementList import MachineModel
 from ..models.element import PhysicalElement
 
+def represent_tuple(dumper, data):
+    return dumper.represent_sequence('tag:yaml.org,2002:seq', data)
+
+yaml.add_representer(tuple, represent_tuple)
+
 
 def export_as_yaml(
     filename: Union[str, None], ele: PhysicalElement = PhysicalElement
@@ -13,6 +18,7 @@ def export_as_yaml(
             yaml.default_flow_style = False
             dump = ele.base_model_dump()
             # dump["hardware_subclass"] = ele.__class__.__name__
+            dump.pop("CASCADING_RULES")
             yaml.dump(dump, yaml_file)
     else:
         dump = ele.base_model_dump()

@@ -310,13 +310,13 @@ class Screen_Diagnostic(DiagnosticElement):
     devices: Union[str, list, DeviceList] = DeviceList()
     """Devices associated with the screen."""
 
-    @model_validator(mode="before")
-    def update_camera_name_if_not_defined(cls, data):
-        if (
-            "camera_name" in data and data["camera_name"] == ""
-        ) or "camera_name" not in data:
-            data["camera_name"] = data["name"].replace("-SCR-", "-CAM-")
-        return data
+    # @model_validator(mode="before")
+    # def update_camera_name_if_not_defined(cls, data):
+    #     if (
+    #         "camera_name" in data and data["camera_name"] == ""
+    #     ) or "camera_name" not in data:
+    #         data["camera_name"] = data["name"].replace("-SCR-", "-CAM-")
+    #     return data
 
     @field_validator("devices", mode="before")
     @classmethod

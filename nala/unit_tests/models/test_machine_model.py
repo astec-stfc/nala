@@ -5,7 +5,7 @@ from nala.models.elementList import (
     MachineModel,
     baseElement,
 )
-from nala.models.element import Element
+from nala.models.element import PhysicalBaseElement, Element
 import unittest
 
 
@@ -264,7 +264,7 @@ class TestMachineModel(unittest.TestCase):
             }
         }
         mm = MachineModel(
-            elements={name: Element(**info) for name, info in self.elements.items()},
+            elements={name: PhysicalBaseElement(**info) for name, info in self.elements.items()},
             section=sections,
             layout=layout,
         )

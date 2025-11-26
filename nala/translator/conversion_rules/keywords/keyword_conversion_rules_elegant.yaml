@@ -18,6 +18,7 @@ general:
   current_bins: n_bins
   lsc_enable: lsc
   tilt_angle: tilt
+  wakefield_definition: wakefile
 dipole:
   isr_enable: isr
   sr_enable: synch_rad
@@ -113,7 +114,7 @@ center:
   center_s: s,
   center_delta: delta,
   center_t: t
-twiss:
+twissmatch:
   beta_x: betax
   alpha_x: alphax
   beta_y: betay

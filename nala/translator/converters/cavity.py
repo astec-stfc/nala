@@ -98,12 +98,12 @@ class RFCavityTranslator(BaseElementTranslator):
                 self.simulation.wakefield_definition == ""
         ):
             etype = "rfca"
-            if self.simulation.field_definition is not None:
-                etype = "rftmez0"
-                if ".sdds" not in self.simulation.field_definition:
-                    field_file_name = self.generate_field_file_name(
-                    self.simulation.field_definition, code="elegant"
-                )
+            # if self.simulation.field_definition is not None:
+                # etype = "rftmez0"
+                # if ".sdds" not in self.simulation.field_definition:
+                #     field_file_name = self.generate_field_file_name(
+                #     self.simulation.field_definition, code="elegant"
+                # )
         else:
             wakefield_file_name = self.generate_field_file_name(
                 self.simulation.wakefield_definition, code="elegant"
@@ -117,7 +117,7 @@ class RFCavityTranslator(BaseElementTranslator):
                     and not key == "commandtype"
                     and self._convertKeyword_Elegant(key, updated_type=self.hardware_type) in elements_Elegant[etype]
             ):
-                if value:
+                if value is not None:
                     key = self._convertKeyword_Elegant(key, updated_type=self.hardware_type).lower()
                     # rftmez0 uses frequency instead of freq
                     if etype == "rftmez0" and key == "freq":
