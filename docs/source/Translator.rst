@@ -32,8 +32,8 @@ Base Element Translator
 -----------------------
 
 The :py:class:`BaseElementTranslator <nala.translator.converters.base.BaseElementTranslator>` class extends
-:py:class:`Element <nala.models.element.Element>` and provides the core functionality for translating individual
-elements into simulation-specific formats.
+:py:class:`PhysicalBaseElement <nala.models.element.PhysicalBaseElement>` and provides the core functionality for
+translating individual elements into simulation-specific formats.
 
 Key attributes include:
 
@@ -132,6 +132,9 @@ Additional attributes for code-specific configuration:
 * ``csrtrack_headers: Dict``: Configuration headers for CSRTrack input files.
 * ``gpt_headers: Dict``: Configuration headers for GPT input files.
 * ``opal_headers: Dict``: Configuration headers for OPAL input files.
+* ``csr_enable: bool``: Flag to enable calculation of CSR.
+* ``lsc_enable: bool``: Flag to enable calculation of LSC.
+* ``lsc_bins: PositiveInt``: Number of LSC bins.
 
 Translation methods for complete lattice sections:
 
@@ -196,7 +199,7 @@ Example workflow:
 
 .. warning::
 
-   OPAL / GPT translation has not been fully benchmarked and tested. Use with caution.
+   OPAL / GPT translation have not been fully benchmarked and tested. Use with caution.
 
 The translator module ensures consistency across different simulation codes while preserving the physics
 and geometry defined in the NALA lattice model. Field maps, wakefields, and other external data files

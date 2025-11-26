@@ -268,7 +268,7 @@ the :ref:`translator` module.
         },
         simulation={
             "field_amplitude": 25e6,  # 25 MV/m
-            "phase": 0.0,
+            "phase": 0.0, # degrees, crest is at 0.0
             "field_definition": {
                 "filename": "cavity_field.hdf5",
                 "field_type": "1DElectroDynamic",
@@ -351,12 +351,18 @@ TANGO Attribute, organised as follows:
 
 .. _electrical-and-manufacturer:
 
-Electrical and Manufacturer Information
+Electrical, Manufacturer and Reference Information
 ---------------------------------------
 
-Other useful sets of information about an :py:class:`Element <nala.models.element.Element>` include electrical and
-manufacturer information, stored in :py:class:`ElectricalElement <nala.models.electrical.ElectricalElement>`
-and :py:class:`ManufacturerElement <nala.models.manufacturer.ManufacturerElement>`, respectively.
+Other useful sets of information about an :py:class:`Element <nala.models.element.Element>` include electrical,
+manufacturer and reference information, stored in
+:py:class:`ElectricalElement <nala.models.electrical.ElectricalElement>`,
+:py:class:`ManufacturerElement <nala.models.manufacturer.ManufacturerElement>`, and
+:py:class:`ManufacturerElement <nala.models.reference.ReferenceElement>`, respectively.
+
+These classes can be used to store additional metadata about an element that may be useful for
+maintenance, procurement, or documentation purposes.
+
 The attributes of these classes are as follows:
 
 Electrical
@@ -371,6 +377,15 @@ Manufacturer
 
 * ``manufacturer: str`` -- name of the element manufacturer.
 * ``serial_number: str`` -- serial number of the element
+
+Reference
+~~~~~~~~~
+
+* ``drawings: List[str]`` -- Paths to mechanical drawings of the element.
+* ``design_files: List[str]`` -- Paths to design files for the element.
+
+Note that reference information is not limited to mechanical drawings and design files; it can be extended to include
+other types of reference materials as needed.
 
 .. _magnet:
 

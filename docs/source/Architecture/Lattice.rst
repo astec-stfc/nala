@@ -17,6 +17,70 @@ These classes are outlined below; refer to :numref:`fig-lattice-structure` for a
 
    Class structure of :mod:`NALA` sections, lattices and machines.
 
+.. _element-list:
+
+Element List
+------------
+
+The :py:class:`ElementList <nala.models.elementList.ElementList>` class provides a container for an unordered dictionary of element objects. It is used to manage collections of :py:class:`baseElement <nala.models.element.baseElement>` instances, typically within a section lattice.
+
+**Attributes:**
+
+* ``elements: Dict[str, baseElement | None]``: Dictionary of element objects, keyed by their names.
+
+**Key Methods and Properties:**
+
+* ``names``: Returns a list of element names contained in the list.
+* ``index(element)``: Returns the index of an element (by name or object).
+* ``list()``: Returns a list of all element objects.
+
+**Example Usage:**
+
+.. code-block:: python
+
+    from nala.models.elementList import ElementList
+    from nala.models.element import PhysicalBaseElement
+
+    element_list = ElementList(
+        elements={
+            "cavity1": PhysicalBaseElement(
+                name="cavity1",
+                hardware_class="RFCavity",
+                hardware_type="RFCavity",
+                machine_area="INJ",
+                physical={
+                    "middle": [0, 0, 0.2],
+                    "length": 0.4,
+                }
+            ),
+            "quad1": PhysicalBaseElement(
+                name="quad1",
+                hardware_class="Magnet",
+                hardware_type="Quadrupole",
+                machine_area="INJ",
+                physical={
+                    "middle": [0, 0, 0.6],
+                    "length": 0.1,
+                }
+            ),
+            "cavity2": PhysicalBaseElement(
+                name="cavity2",
+                hardware_class="RFCavity",
+                hardware_type="RFCavity",
+                machine_area="INJ",
+                physical={
+                    "middle": [0, 0, 1.0],
+                    "length": 0.2,
+                }
+            )
+        }
+    )
+
+    print(element_list.names)  # ['gun', 'solenoid']
+    cav1 = element_list["cavity1"]
+    idx = element_list.index("quad1")
+    all_elements = element_list.list()
+
 .. _section-lattice:
 
 Section Lattice
@@ -47,10 +111,10 @@ Example usage:
     
     section = SectionLattice(
         name="injector",
-        order=["gun", "solenoid1", "buncher"],
+        order=["cavity1", "quad1", "cavity2"],
         elements=element_list
     )
-    s_positions = section.get_s_values(as_dict=True)
+    s_positions = section.get_s_values(as_dict=True, at_entrance=True)
 
 .. _machine-layout:
 
