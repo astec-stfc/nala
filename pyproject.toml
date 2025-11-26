@@ -6,7 +6,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "NALA"
+name = "nala-accelerator"
 description = "A standardized lattice format for particle accelerators"
 readme = "README.md"
 dynamic = ["version"]
