@@ -3,35 +3,43 @@ name: Publish Python Package to PyPI
 on:
   push:
     tags:
-      - "v*"  # Trigger on tags like v0.1.0, v1.2.3
+      - "v*"  # trigger on tags like v0.1.0
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout all history (needed for setuptools_scm)
+      # 1️⃣ Checkout full git history with tags
       - uses: actions/checkout@v4
-          with:
-            fetch-depth: 0      # fetch all history
-            fetch-tags: true    # ensure tags are available
+        with:
+          fetch-depth: 0
+          tags: true
 
-      # 2. Set up Python
+      # 2️⃣ Set up Python
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      # 3. Install build tools
-      - name: Install build and twine
+      # 3️⃣ Upgrade pip and install build tools
+      - name: Install build tools
         run: |
           python -m pip install --upgrade pip
           pip install build twine setuptools_scm
 
-      # 4. Build the package
+      # 4️⃣ Optional: check detected version
+      - name: Check version
+        run: python -c "import setuptools_scm; print(setuptools_scm.get_version())"
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ github.ref_name }}
+
+      # 5️⃣ Build distributions
       - name: Build distributions
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ github.ref_name }}
         run: python -m build
 
-      # 5. Publish to PyPI using token
+      # 6️⃣ Publish to PyPI
       - name: Publish to PyPI
         env:
           TWINE_USERNAME: __token__
