@@ -1,9 +1,5 @@
 [build-system]
-requires = [
-    "setuptools>=61.0", 
-    "wheel", 
-    "setuptools_scm",	
-]
+requires = ["setuptools>=61.0", "wheel", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -12,11 +8,15 @@ description = "A standardized lattice format for particle accelerators"
 readme = "README.md"
 dynamic = ["version"]
 authors = [
-    {name = "me", email = "me@me.com"},
+    {name = "James Jones", email = "james.jones@stfc.ac.uk"},
 ]
 maintainers = [
-    {name = "me", email = "me@me.com"},
+    {name = "James Jones", email = "james.jones@stfc.ac.uk"},
+    {name = "Alex Brynes", email = "alexander.brynes@stfc.ac.uk"},
+    {name = "Mark Johnson", email = "mark.johnson@stfc.ac.uk"},
+    {name = "Matt King", email = "matthew.king@stfc.ac.uk"},
 ]
+
 dependencies = [
     "pydantic>=2", 
     "pyyaml>=6", 
@@ -30,6 +30,10 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
 ]
+
+[tool.setuptools_scm]
+version_scheme = "pep440"
+local_scheme = "no-local-version"
 
 [project.optional-dependencies]
 
