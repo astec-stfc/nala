@@ -12,8 +12,9 @@ jobs:
     steps:
       # 1. Checkout all history (needed for setuptools_scm)
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+          with:
+            fetch-depth: 0      # fetch all history
+            fetch-tags: true    # ensure tags are available
 
       # 2. Set up Python
       - uses: actions/setup-python@v5
