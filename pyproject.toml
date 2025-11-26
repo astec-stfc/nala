@@ -32,8 +32,9 @@ classifiers = [
 ]
 
 [tool.setuptools_scm]
-version_scheme = "pep440"
-local_scheme = "no-local-version"
+version_scheme = "post-release"   # valid built-in scheme
+local_scheme = "no-local-version" # removes +untagged suffix
+
 
 [project.optional-dependencies]
 
