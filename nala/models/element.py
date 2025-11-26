@@ -744,8 +744,7 @@ class TwissMatch(PhysicalBaseElement):
     Attributes:
         hardware_type (str): The hardware type of the element.
         hardware_class (str): The hardware class of the element.
-        simulation (:class:`~nala.models.simulation.TwissMatchSimulationElement`):
-        The simulation attributes of the matching element.
+        simulation (:class:`~nala.models.simulation.TwissMatchSimulationElement`): The simulation attributes of the matching element.
     """
 
     hardware_type: str = Field(default="TwissMatch", frozen=True)
